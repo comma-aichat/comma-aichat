@@ -659,10 +659,11 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .defav{display:block;width:100%;height:100%;border-radius:50%}
 
 /* basics */
-.basics{display:grid;gap:6px;margin:6px 0 14px;padding:12px 14px;border-radius:12px;background:var(--card2);font-size:14.5px;color:var(--text2);line-height:1.55}
+.basics{display:grid;gap:12px;margin:6px 0 4px;padding:12px 14px;border-radius:12px;background:var(--card2);font-size:14.5px;color:var(--text2);line-height:1.55}
 .basics p{margin:0}
 .basics .brow{color:var(--text);font-weight:600}
-.basics b{color:var(--pink2);margin-right:4px}
+.basics .bi b{display:block;color:var(--pink2);font-size:13.5px;margin-bottom:2px}
+.basics .bi p{white-space:pre-line}
 
 /* support */
 .sup{display:grid;justify-items:center;gap:14px;margin:18px 16px 0;padding:34px 22px 26px;border-radius:var(--r-md);background:var(--bg2);border:1px solid var(--line);text-align:center}
@@ -1801,9 +1802,11 @@ const byId = id => CHARS.find(c => c.id === id);
 const byDb = dbId => CHARS.find(c => c.dbId === dbId);
 /* Comma originals keep their illustrations; anything a creator left without an image gets the plain default */
 function basicsHTML(c) {
-  const b = c.basics; if (!b) return '';
+  const b = c.basics || {};
   const row = [b.age, b.gender, b.height].filter(Boolean).map(esc).join(' · ');
-  return `<div class="basics">${row ? `<p class="brow">${row}</p>` : ''}${b.looks ? `<p><b>외모</b> ${esc(b.looks)}</p>` : ''}</div>`;
+  const item = (k, v) => v ? `<div class="bi"><b>${k}</b><p>${esc(v)}</p></div>` : '';
+  const body = (row ? `<p class="brow">${row}</p>` : '') + item('외모', b.looks) + item('성격', c.pers) + item('말투', c.talk);
+  return body ? `<div class="basics">${body}</div>` : '';
 }
 function pic(c, uid) {
   if (c.img) return `<img src="${esc(c.img)}" alt="${esc(c.name)}">`;
@@ -2269,7 +2272,7 @@ function detailHTML(c, preview, coverView) {
     if (p.showExamples && p.examples.length) secs.push(`<section class="ds"><h3>상황 예시</h3><div class="dscene">${p.examples.map(x => line({ type: x.who === 'user' ? 'user' : 'char', ci: x.who === 'user' ? 0 : x.who, text: x.text })).join('')}</div></section>`);
     if (p.commentOn && p.comment) secs.push(`<section class="ds"><h3>크리에이터 코멘트</h3><p>${esc(p.comment)}</p></section>`);
   } else {
-    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}<div class="md"><p><b>성격</b></p><p>${esc(c.pers)}</p><br><p><b>말투</b></p><p>${esc(c.talk)}</p></div></div></section>`,
+    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}</div></section>`,
       `<section class="ds"><h3>인트로</h3><div class="dscene"><div class="dl char"><span class="dav">${pic(c, 'ia')}</span><div><small>${esc(c.name)}</small><p>${esc(c.greet)}</p></div></div></div></section>`);
   }
   const personas = p && p.personas.filter(x => x.name).length, lore = p && p.lore.some(l => l.keys.length);

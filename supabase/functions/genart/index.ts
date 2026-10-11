@@ -30,6 +30,25 @@ Deno.serve(async (req) => {
     return json({ ok: !error, url: pub.publicUrl, error: error?.message });
   }
 
+  // 오리지널 그림 아래쪽(워터마크) 잘라내기
+  if (Array.isArray(body.crop)) {
+    const out: any[] = [];
+    for (const item of body.crop) {
+      const { data } = await admin.storage.from("character-images").download(String(item.path));
+      if (!data) { out.push({ path: item.path, error: "missing" }); continue; }
+      const im = await Image.decode(new Uint8Array(await data.arrayBuffer()));
+      const cut = Number(body.cut) || 56;
+      im.crop(0, 0, im.width, im.height - cut);
+      const np = String(item.path).replace(/\.jpg$/, "-c.jpg");
+      const up = await admin.storage.from("character-images").upload(np, await im.encodeJPEG(90), { contentType: "image/jpeg", upsert: true });
+      if (up.error) { out.push({ path: item.path, error: up.error.message }); continue; }
+      const url = admin.storage.from("character-images").getPublicUrl(np).data.publicUrl;
+      const { error } = await admin.from("characters").update({ image_url: url }).eq("slug", String(item.slug)).eq("is_official", true);
+      out.push({ slug: item.slug, url, error: error?.message });
+    }
+    return json({ ok: true, out });
+  }
+
   // 여러 그림을 한 장에 모아 작은 미리보기로 (확인용)
   if (Array.isArray(body.montage)) {
     const cw = Number(body.tw) || 110, ch = Math.round(cw * 1.25), cols = Number(body.cols) || 5;
