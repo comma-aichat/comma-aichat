@@ -621,6 +621,39 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .noimg .ico{width:38%;height:38%;max-width:96px;max-height:96px;fill:currentColor;stroke:none}
 .card .art .noimg{position:absolute;inset:0}
 .d-hero>.noimg .ico{width:28%;height:28%}
+
+/* search */
+.srtop{gap:4px;padding-left:6px}
+.srbox{flex:1;min-width:0;display:flex;align-items:center;height:44px;border-radius:12px;background:var(--card2);padding:0 4px 0 14px}
+.srbox input{flex:1;min-width:0;height:100%;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:16px}
+.srbox input::-webkit-search-cancel-button{display:none}
+.srclear[hidden]{display:none}
+.srclear{width:34px;height:34px;display:grid;place-items:center;color:var(--text3)}
+.srclear .ico{width:18px;height:18px}
+.slist{display:grid;padding:4px 0}
+.srow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 16px;text-align:left;color:var(--text)}
+.srow:active{background:var(--card)}
+.srow .bav{width:42px;height:42px}
+.srow .bl{display:grid;min-width:0}
+.srow .bl b{font-weight:600;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .bl small{color:var(--text3);font-size:13px}
+.hash{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--card2);color:var(--text2);font-weight:700;font-size:18px}
+.hash .ico{width:20px;height:20px}
+.srtags{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:8px 16px 0}
+.srtags::-webkit-scrollbar{display:none}
+.ucards{display:grid;grid-auto-flow:column;grid-auto-columns:104px;gap:10px;overflow-x:auto;scrollbar-width:none;padding:0 16px 2px}
+.ucards::-webkit-scrollbar{display:none}
+.ucard{display:grid;justify-items:center;gap:4px;padding:14px 8px;border-radius:14px;background:var(--card);color:var(--text);text-align:center;min-width:0}
+.ucard .bav{width:58px;height:58px;font-size:20px;margin-bottom:4px}
+.ucard b{font-size:14px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ucard small{color:var(--text3);font-size:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srsort{position:relative;display:flex;align-items:center;flex:none}
+.srsort select{appearance:none;-webkit-appearance:none;height:34px;padding:0 30px 0 12px;border-radius:10px;background:var(--card2);border:0;color:var(--text);font:inherit;font-size:13.5px;font-weight:600}
+.srsort .ico{position:absolute;right:8px;width:16px;height:16px;pointer-events:none;color:var(--text3)}
+.srempty{display:grid;justify-items:center;gap:8px;padding:48px 24px;text-align:center}
+.srempty p{margin:0;color:var(--text3);font-size:15px}
+.srempty b{font-size:16px;margin-bottom:10px}
+.srempty .btn{flex:none;padding:0 22px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -1579,6 +1612,98 @@ document.addEventListener('click', e => {
   if (t.closest('[data-goback]')) { if (history.length > 1) history.back(); else location.hash = '#home'; return; }
 });
 
+/* ============ search screen (#search) ============ */
+const SR = { q: '', done: false, users: null, seq: 0, sort: 'rec', tag: '' };
+function escLike(q) { return q.replace(/[%_\\,()]/g, m => '\\' + m); }
+async function findUsers(q) {
+  const t = q.trim().replace(/^@/, ''); if (!t || !sb) return [];
+  const pat = `%${escLike(t)}%`;
+  const [a, b] = await Promise.all([
+    sb.from('profiles').select('id,nickname,handle,avatar_url,follower_count').ilike('nickname', pat).limit(20),
+    sb.from('profiles').select('id,nickname,handle,avatar_url,follower_count').ilike('handle', pat.toLowerCase()).limit(20),
+  ]);
+  const map = new Map();
+  for (const r of [...(a.data || []), ...(b.data || [])]) map.set(r.id, r);
+  return [...map.values()].sort((x, y) => (y.follower_count || 0) - (x.follower_count || 0));
+}
+function tagStats(q) {
+  const t = q.trim().replace(/^#/, '').toLowerCase(); if (!t) return [];
+  const count = new Map();
+  for (const c of CHARS) for (const g of c.tags) if (g.toLowerCase().includes(t)) count.set(g, (count.get(g) || 0) + 1);
+  return [...count.entries()].sort((a, b) => (b[0].toLowerCase() === t) - (a[0].toLowerCase() === t) || b[1] - a[1]).slice(0, 8);
+}
+function charResults(q) {
+  const t = q.trim().toLowerCase(); const tagOnly = t.startsWith('#'); const k = t.replace(/^[#@]/, '');
+  if (!k) return [];
+  return CHARS.filter(c => {
+    const tagHit = c.tags.some(g => g.toLowerCase().includes(k));
+    if (tagOnly) return tagHit;
+    const by = c.by ? ((c.by.nickname || '') + ' ' + (c.by.handle || '')).toLowerCase() : '';
+    return c.name.toLowerCase().includes(k) || c.tl.toLowerCase().includes(k) || tagHit || by.includes(k);
+  });
+}
+function srSorted(list) {
+  if (SR.sort === 'f' || SR.sort === 'm') return list.filter(c => c.gender === SR.sort).sort((a, b) => popScore(b) - popScore(a));
+  if (SR.sort === 'pop') return list.slice().sort((a, b) => popScore(b) - popScore(a));
+  if (SR.sort === 'new') return list.slice().sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
+  return list.slice().sort((a, b) => popScore(b) - popScore(a));
+}
+const SR_SORTS = [['rec', '추천순'], ['f', '여성 추천순'], ['m', '남성 추천순'], ['pop', '인기순'], ['new', '최신순']];
+function userCard(u) { return `<a class="ucard" href="#u-${u.id}"><span class="bav">${avatar(u)}</span><b>${esc(u.nickname)}</b><small>${u.handle ? '@' + esc(u.handle) : ''}</small></a>`; }
+function renderSearch() {
+  $('#top').innerHTML = `<header class="top srtop"><button class="iconbtn" data-goback aria-label="뒤로">${I.back}</button>
+    <form class="srbox" id="srForm" role="search"><input id="srq" type="search" value="${esc(SR.q)}" placeholder="캐릭터, #태그, 닉네임, @아이디" autocomplete="off" enterkeyhint="search"><button type="button" class="srclear" data-srclear aria-label="지우기" ${SR.q ? '' : 'hidden'}>${I.close}</button></form></header>`;
+  const inp = $('#srq');
+  inp.addEventListener('input', e => { SR.q = e.target.value; SR.done = false; renderSearchBody(); fetchUsersSoon(); });
+  $('#srForm').addEventListener('submit', e => { e.preventDefault(); runSearch(inp.value); });
+  renderSearchBody();
+}
+function renderSearchBody() {
+  const cl = $('.srclear'); if (cl) cl.hidden = !SR.q;
+  const q = SR.q.trim();
+  let html = '';
+  if (!q) {
+    const recents = recentQ(); const tags = [...new Set(CHARS.flatMap(c => c.tags))].slice(0, 14);
+    html = `<div class="sugg">${recents.length ? `<div class="suggh"><b>최근 검색</b><button class="mini" data-clearq>모두 지우기</button></div><div class="chips wrap">${recents.map(r => `<button class="chip sm" data-srgo="${esc(r)}">${esc(r)}</button>`).join('')}</div>` : ''}
+      <div class="suggh"><b>태그로 찾기</b></div><div class="chips wrap">${tags.map(g => `<button class="chip sm" data-srgo="#${esc(g)}">#${esc(g)}</button>`).join('')}</div></div>`;
+  } else if (!SR.done) {
+    /* live suggestions while typing */
+    const users = SR.users || []; const tags = tagStats(q);
+    html = `<div class="slist">${users.slice(0, 5).map(u => `<a class="srow" href="#u-${u.id}"><span class="bav">${avatar(u)}</span><span class="bl"><b>${esc(u.nickname)}</b><small>${u.handle ? '@' + esc(u.handle) : ''}</small></span></a>`).join('')}
+      ${tags.map(([g, n]) => `<button class="srow" data-srgo="#${esc(g)}"><span class="hash">#</span><span class="bl"><b>${esc(g)}</b><small>캐릭터 ${n.toLocaleString()}개</small></span></button>`).join('')}
+      <button class="srow" data-srgo="${esc(q)}"><span class="hash">${I.search}</span><span class="bl"><b>"${esc(q)}" 검색하기</b></span></button></div>`;
+  } else {
+    const users = (SR.users || []);
+    const chars = srSorted(charResults(q));
+    const rel = [...new Set(charResults(q).flatMap(c => c.tags))].filter(g => g.toLowerCase() !== q.replace(/^#/, '').toLowerCase()).slice(0, 10);
+    html = `${rel.length ? `<div class="chips srtags">${rel.map(g => `<button class="chip sm" data-srgo="#${esc(g)}">${esc(g)}</button>`).join('')}</div>` : ''}
+      ${users.length ? `<section class="sec"><div class="rowh pad2"><div><h2>${users.length.toLocaleString()}명의 크리에이터</h2></div></div><div class="ucards">${users.map(userCard).join('')}</div></section>` : ''}
+      <section class="sec"><div class="rowh pad2"><div><h2>${chars.length.toLocaleString()}개의 캐릭터</h2></div>
+        <label class="srsort"><select id="srSort" aria-label="정렬">${SR_SORTS.map(([k, l]) => `<option value="${k}" ${SR.sort === k ? 'selected' : ''}>${l}</option>`).join('')}</select>${I.down}</label></div>
+        ${chars.length ? `<div class="grid">${chars.map(cardHTML).join('')}</div>` : `<div class="srempty"><p>검색 결과가 없어요</p><b>원하는 캐릭터를 직접 만들어 볼까요?</b><a class="btn" href="#new">캐릭터 만들기 ${I.back.replace('class="ico"', 'class="ico" style="transform:rotate(180deg);width:18px;height:18px"')}</a></div>`}</section>`;
+  }
+  $('#view').innerHTML = html;
+  const ss = $('#srSort'); if (ss) ss.addEventListener('change', e => { SR.sort = e.target.value; renderSearchBody(); });
+}
+let srTimer = 0;
+function fetchUsersSoon() {
+  clearTimeout(srTimer); const seq = ++SR.seq; const q = SR.q;
+  srTimer = setTimeout(async () => { const u = await findUsers(q); if (seq !== SR.seq) return; SR.users = u; if (curHash() === 'search' && !SR.done) renderSearchBody(); }, 250);
+}
+async function runSearch(q) {
+  q = (q || '').trim(); if (!q) return;
+  SR.q = q; SR.done = true; pushRecentQ(q); const n0 = $('#srq'); if (n0 && n0.value !== q) n0.value = q; renderSearchBody();
+  const seq = ++SR.seq; const u = q.startsWith('#') ? [] : await findUsers(q);
+  if (seq !== SR.seq) return; SR.users = u; if (curHash() === 'search') renderSearchBody();
+  const n = $('#srq'); if (n) n.blur();
+}
+function openSearch() { SR.q = ''; SR.done = false; SR.users = []; renderSearch(); setTimeout(() => { const n = $('#srq'); if (n) n.focus(); }, 50); }
+document.addEventListener('click', e => {
+  const t = e.target; let m;
+  if ((m = t.closest('[data-srgo]'))) { e.preventDefault(); if (curHash() !== 'search') { location.hash = '#search'; setTimeout(() => runSearch(m.dataset.srgo), 30); } else runSearch(m.dataset.srgo); return; }
+  if (t.closest('[data-srclear]')) { SR.q = ''; SR.done = false; SR.users = []; SR.seq++; const n = $('#srq'); if (n) { n.value = ''; n.focus(); } renderSearchBody(); return; }
+});
+
 /* ============ Supabase ============ */
 const SB_URL = 'https://dqozoyzxsosnzegqqdpz.supabase.co';
 const SB_KEY = 'sb_publishable_jXaCakxSow679VzOdyCWYQ_lwWJouCp';
@@ -2146,8 +2271,8 @@ function route() {
   document.body.classList.remove('editing');
   const isDetail = h.startsWith('c-');
   if (h.startsWith('u-')) { $('#detail').innerHTML = ''; document.body.style.overflow = ''; document.querySelectorAll('[data-nav]').forEach(a => a.classList.remove('on')); window.scrollTo(0, 0); lastBase = 'user'; openUser(h.slice(2)); return; }
-  const base = isDetail ? lastBase : (['home', 'rank', 'create', 'chats', 'me', 'edit', 'reset', 'noti'].includes(h) ? h : 'home');
-  const tab = { home: 'home', rank: 'home', create: 'create', chats: 'chats', me: 'me', edit: 'me', reset: 'me', noti: 'home' }[base];
+  const base = isDetail ? lastBase : (['home', 'rank', 'create', 'chats', 'me', 'edit', 'reset', 'noti', 'search'].includes(h) ? h : 'home');
+  const tab = { home: 'home', rank: 'home', create: 'create', chats: 'chats', me: 'me', edit: 'me', reset: 'me', noti: 'home', search: 'home', user: '' }[base];
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === tab));
   document.body.style.overflow = isDetail ? 'hidden' : '';
   if (isDetail) { if (!$('#view').children.length) renderBase(base); renderDetail(h.slice(2)); return; }
@@ -2155,7 +2280,7 @@ function route() {
   if (base !== lastBase) window.scrollTo(0, 0);
   lastBase = base; if (base === 'noti') { renderNoti(true); return; } renderBase(base);
 }
-function renderBase(b) { ({ home: renderHome, rank: renderRank, create: renderCreate, chats: renderChats, me: renderMe, edit: renderEdit, reset: renderReset, noti: renderNoti, user: renderUser })[b](); }
+function renderBase(b) { ({ home: renderHome, rank: renderRank, create: renderCreate, chats: renderChats, me: renderMe, edit: renderEdit, reset: renderReset, noti: renderNoti, user: renderUser, search: renderSearch })[b](); }
 function rerender() {
   const h = curHash();
   if (h === 'new' || h.startsWith('ed-')) { if (!E.data) route(); return; }
@@ -2190,8 +2315,9 @@ document.addEventListener('click', e => {
   if (t.closest('[data-chatsearch]')) { S.chatSearch = !S.chatSearch; if (!S.chatSearch) S.cq = ''; renderChats(); const q = $('#cq'); if (q) q.focus(); return; }
   if ((m = t.closest('[data-sort]'))) { S.sort = m.dataset.sort; renderHome(); if (m.classList.contains('lnk')) { const g = document.querySelector('.sortsel'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
   if ((m = t.closest('[data-q]'))) { S.q = m.dataset.q; pushRecentQ(S.q); renderHome(); return; }
-  if (t.closest('[data-clearq]')) { store.set('recentQ', []); renderHome(); return; }
-  if (t.closest('[data-search]')) { S.searchOpen = !S.searchOpen; if (!S.searchOpen) S.q = ''; renderBase(lastBase); const q = $('#q'); if (q) q.focus(); return; }
+  if (t.closest('[data-clearq]')) { store.set('recentQ', []); curHash() === 'search' ? renderSearchBody() : renderHome(); return; }
+  if (t.closest('[data-search]')) { SR.q = ''; SR.done = false; SR.users = []; SR.sort = 'rec'; if (curHash() === 'search') openSearch(); else { location.hash = '#search'; setTimeout(() => { const n = $('#srq'); if (n) n.focus(); }, 60); } return; }
+  if (false) { S.searchOpen = !S.searchOpen; if (!S.searchOpen) S.q = ''; renderBase(lastBase); const q = $('#q'); if (q) q.focus(); return; }
   if (t.closest('[data-readall]')) { markAllRead(true); return; }
   if (t.closest('[data-soon3]')) { toast('AI 대화는 3단계에서 열려요'); return; }
   if (t.closest('[data-soon4]')) { toast('캐릭터 만들기는 4단계에서 열려요'); return; }
