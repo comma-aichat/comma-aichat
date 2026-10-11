@@ -1635,7 +1635,12 @@ const I = {
 function toast(t) { const o = document.querySelector('.toast'); if (o) o.remove(); const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.append(e); setTimeout(() => e.remove(), 2200); }
 const byId = id => CHARS.find(c => c.id === id);
 const byDb = dbId => CHARS.find(c => c.dbId === dbId);
-function pic(c) { return c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}">` : `<span class="noimg" role="img" aria-label="${esc(c.name)} 이미지 없음">${I.user}</span>`; }
+/* Comma originals keep their illustrations; anything a creator left without an image gets the plain default */
+function pic(c, uid) {
+  if (c.img) return `<img src="${esc(c.img)}" alt="${esc(c.name)}">`;
+  if (c.official && c.art) return art(c, uid);
+  return `<span class="noimg" role="img" aria-label="${esc(c.name)} 이미지 없음">${I.user}</span>`;
+}
 const curHash = () => (location.hash || '#home').slice(1);
 
 /* ============ favorites ============ */
