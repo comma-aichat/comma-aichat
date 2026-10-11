@@ -2195,7 +2195,7 @@ function renderEdit() {
   $('#avatarIn').addEventListener('change', e => { uploadImage(e.target.files[0], 'avatar'); e.target.value = ''; });
 }
 /* 후원: 투네이션 링크를 받으면 여기에 넣기 */
-const DONATE_URL = '';
+const DONATE_URL = 'https://ko-fi.com/comma_ai';
 function renderSupport() {
   $('#top').innerHTML = `<header class="top"><h1>후원</h1></header>`;
   $('#view').innerHTML = `<section class="sup"><span class="em">${I.heart}</span><h2>Comma를 응원해 주세요</h2>
