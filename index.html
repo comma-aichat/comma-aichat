@@ -1463,7 +1463,7 @@ async function toggleFollow(uid, btn) {
 /* comments on the detail page */
 async function loadComments(c) {
   CM.charId = c.dbId; CM.list = null;
-  const { data } = await sb.from('comments').select('id,user_id,content,created_at,profiles(nickname,handle,avatar_url)').eq('character_id', c.dbId).order('id', { ascending: false }).limit(50);
+  const { data } = await sb.from('comments').select('id,user_id,content,created_at,profiles!comments_user_id_fkey(nickname,handle,avatar_url)').eq('character_id', c.dbId).order('id', { ascending: false }).limit(50);
   if (CM.charId !== c.dbId) return;
   CM.list = data || []; paintComments(c);
 }
@@ -1554,7 +1554,7 @@ const fromRow = r => ({ id: r.slug || r.id, dbId: r.id, name: r.name, en: (r.art
 const CHAR_COLS = 'id,slug,owner_id,name,tagline,intro,personality,speech,world,greeting,category,tags,art,image_url,images,plot,status,allow_comments,is_public,is_official,chat_count,message_count,favorite_count,comment_count,created_at';
 async function loadCharacters() {
   if (!sb) throw new Error('no client');
-  const { data, error } = await sb.from('characters').select(CHAR_COLS + ',profiles(nickname,handle)').eq('is_public', true).order('is_official', { ascending: false }).order('created_at');
+  const { data, error } = await sb.from('characters').select(CHAR_COLS + ',profiles!characters_owner_id_fkey(nickname,handle)').eq('is_public', true).order('is_official', { ascending: false }).order('created_at');
   if (error) throw error;
   return data.map(r => Object.assign(fromRow(r), { by: r.profiles || null, created: r.created_at }));
 }
