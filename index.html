@@ -1647,10 +1647,10 @@ function charResults(q) {
   });
 }
 function srSorted(list) {
-  if (SR.sort === 'f' || SR.sort === 'm') return list.filter(c => c.gender === SR.sort).sort((a, b) => popScore(b) - popScore(a));
+  if (SR.sort === 'f' || SR.sort === 'm') return list.filter(c => c.gender === SR.sort).sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
   if (SR.sort === 'pop') return list.slice().sort((a, b) => popScore(b) - popScore(a));
   if (SR.sort === 'new') return list.slice().sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
-  return list.slice().sort((a, b) => popScore(b) - popScore(a));
+  return list.slice().sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
 }
 const SR_SORTS = [['rec', '추천순'], ['f', '여성 추천순'], ['m', '남성 추천순'], ['pop', '인기순'], ['new', '최신순']];
 function userCard(u) { return `<a class="ucard" href="#u-${u.id}"><span class="bav">${avatar(u)}</span><b>${esc(u.nickname)}</b><small>${u.handle ? '@' + esc(u.handle) : ''}</small></a>`; }
@@ -1727,8 +1727,12 @@ async function loadCharacters() {
   if (!sb) throw new Error('no client');
   const { data, error } = await sb.from('characters').select(CHAR_COLS + ',profiles!characters_owner_id_fkey(nickname,handle)').eq('is_public', true).order('is_official', { ascending: false }).order('created_at');
   if (error) throw error;
-  return data.map(r => Object.assign(fromRow(r), { by: r.profiles || null, created: r.created_at }));
+  const list = data.map(r => Object.assign(fromRow(r), { by: r.profiles || null, created: r.created_at }));
+  /* 새 캐릭터(유저 제작)가 먼저, 최신순 → 그다음 Comma 오리지널 */
+  const users = list.filter(c => !c.official).sort((x, y) => String(y.created || '').localeCompare(String(x.created || '')));
+  return users.concat(list.filter(c => c.official));
 }
+const userFirst = (x, y) => (x.official ? 1 : 0) - (y.official ? 1 : 0);
 
 /* ============ state ============ */
 const store = { get(k, d) { try { const v = localStorage.getItem('comma.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('comma.' + k, JSON.stringify(v)); } catch (e) { } } };
@@ -2020,7 +2024,7 @@ function headerHome(rank) {
 }
 const popScore = c => c.stats ? c.stats.favs * 3 + c.stats.msgs + c.stats.chats * 2 : 0;
 function sorted(list) {
-  if (S.sort === 'f' || S.sort === 'm') return list.filter(c => c.gender === S.sort).sort((a, b) => popScore(b) - popScore(a));
+  if (S.sort === 'f' || S.sort === 'm') return list.filter(c => c.gender === S.sort).sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
   if (S.sort === 'pop') return list.slice().sort((a, b) => popScore(b) - popScore(a));
   if (S.sort === 'new') return list.slice().sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
   return list;
