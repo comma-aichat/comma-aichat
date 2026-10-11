@@ -42,7 +42,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* bottom tab bar */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding-bottom:env(safe-area-inset-bottom,0px);background:rgba(16,15,19,.96);border-top:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-.tabbar .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--tabh)}
+.tabbar .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:var(--tabh)}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--text3);font-size:11.5px;font-weight:500;transition:color .2s}
 .tab .ico{width:25px;height:25px}
 .tab.on{color:var(--text)}
@@ -663,6 +663,16 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .basics p{margin:0}
 .basics .brow{color:var(--text);font-weight:600}
 .basics b{color:var(--pink2);margin-right:4px}
+
+/* support */
+.sup{display:grid;justify-items:center;gap:14px;margin:18px 16px 0;padding:34px 22px 26px;border-radius:var(--r-md);background:var(--bg2);border:1px solid var(--line);text-align:center}
+.sup .em{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:rgba(255,79,154,.14);color:var(--pink)}
+.sup .em .ico{width:32px;height:32px;fill:currentColor}
+.sup h2{margin:0;font-family:var(--f-head);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.sup p{margin:0;color:var(--text2);font-size:15px;line-height:1.7;word-break:keep-all}
+.sup .btn{flex:none;width:100%;margin-top:8px}
+.sup .btn[aria-disabled]{opacity:.45;pointer-events:none;box-shadow:none}
+.sup small{color:var(--text3);font-size:12.5px;word-break:keep-all}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -675,6 +685,7 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
   <a class="tab" href="#create" data-nav="create"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path class="pl" d="M12 8v8M8 12h8"/></svg>만들기</a>
   <a class="tab" href="#chats" data-nav="chats"><svg class="ico" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8.5 3.2 8.5 7.2s-3.8 7.2-8.5 7.2c-.9 0-1.8-.1-2.6-.3L5 20l.9-3.6C4.4 15.1 3.5 13.2 3.5 11.2 3.5 7.2 7.3 4 12 4z"/><path class="pl" stroke-width="2.4" d="M8.5 11.3h.01M12 11.3h.01M15.5 11.3h.01"/></svg>대화</a>
   <a class="tab" href="#me" data-nav="me"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4.2"/><path d="M4 20.5c0-4.2 3.6-6.8 8-6.8s8 2.6 8 6.8z"/></svg>마이페이지</a>
+  <a class="tab" href="#support" data-nav="support"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>후원</a>
 </div></nav>
 <div id="detail"></div>
 <div id="sheet"></div>
@@ -2158,7 +2169,7 @@ function renderMe() {
     </div>${footHTML()}`;
 }
 const footHTML = () => `<div class="foot"><div class="logo">comma<i>,</i></div>
-  <p style="margin:8px 0 0">지금은 베타 버전이라 모든 기능을 무료로 쓸 수 있어요.<br>유료 결제나 인앱 결제는 없어요.</p>
+  <p style="margin:8px 0 0">지금은 베타 버전이라 모든 기능을 무료로 쓸 수 있어요.<br>유료 결제나 인앱 결제는 없어요. 후원은 자유예요.</p>
   <p style="margin:12px 0 0;line-height:1.8">만든 사람 · 아가똥꼬<br>카카오톡 오픈채팅 · <b style="color:var(--text2);font-weight:600;user-select:all">아가똥꼬Comma</b><br><span style="font-size:12px">문의를 남겨 주시면 꼼꼼히 확인할게요. 답장은 따로 드리지 않는 방이에요.</span></p></div>`;
 function renderEdit() {
   if (!S.authReady) { $('#top').innerHTML = `<header class="top"><a class="iconbtn" href="#me" aria-label="뒤로">${I.back}</a><h1>프로필 편집</h1></header>`; $('#view').innerHTML = ''; return; }
@@ -2180,6 +2191,15 @@ function renderEdit() {
   $('#e-bio').addEventListener('input', e => $('#bioCnt').textContent = `${e.target.value.length}/300`);
   $('#bannerIn').addEventListener('change', e => { uploadImage(e.target.files[0], 'banner'); e.target.value = ''; });
   $('#avatarIn').addEventListener('change', e => { uploadImage(e.target.files[0], 'avatar'); e.target.value = ''; });
+}
+/* 후원: 투네이션 링크를 받으면 여기에 넣기 */
+const DONATE_URL = '';
+function renderSupport() {
+  $('#top').innerHTML = `<header class="top"><h1>후원</h1></header>`;
+  $('#view').innerHTML = `<section class="sup"><span class="em">${I.heart}</span><h2>Comma를 응원해 주세요</h2>
+    <p>여러분의 후원은 큰 힘이 되고,<br>Comma를 더 좋은 앱으로 키우는 데 쓰여요.</p>
+    ${DONATE_URL ? `<a class="btn" href="${esc(DONATE_URL)}" target="_blank" rel="noopener">${I.heart} 후원하러 가기</a>` : `<span class="btn" aria-disabled="true">후원 페이지를 준비하고 있어요</span>`}
+    <small>후원은 자유예요. 후원하지 않아도 모든 기능을 무료로 쓸 수 있어요.</small></section>${footHTML()}`;
 }
 function renderReset() {
   $('#top').innerHTML = `<header class="top"><a class="iconbtn" href="#me" aria-label="뒤로">${I.back}</a><h1>새 비밀번호</h1></header>`;
@@ -2305,8 +2325,8 @@ function route() {
   document.body.classList.remove('editing');
   const isDetail = h.startsWith('c-');
   if (h.startsWith('u-')) { $('#detail').innerHTML = ''; document.body.style.overflow = ''; document.querySelectorAll('[data-nav]').forEach(a => a.classList.remove('on')); window.scrollTo(0, 0); lastBase = 'user'; openUser(h.slice(2)); return; }
-  const base = isDetail ? lastBase : (['home', 'rank', 'create', 'chats', 'me', 'edit', 'reset', 'noti', 'search'].includes(h) ? h : 'home');
-  const tab = { home: 'home', rank: 'home', create: 'create', chats: 'chats', me: 'me', edit: 'me', reset: 'me', noti: 'home', search: 'home', user: '' }[base];
+  const base = isDetail ? lastBase : (['home', 'rank', 'create', 'chats', 'me', 'edit', 'reset', 'noti', 'search', 'support'].includes(h) ? h : 'home');
+  const tab = { home: 'home', rank: 'home', create: 'create', chats: 'chats', me: 'me', edit: 'me', reset: 'me', noti: 'home', search: 'home', support: 'support', user: '' }[base];
   document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === tab));
   document.body.style.overflow = isDetail ? 'hidden' : '';
   if (isDetail) { if (!$('#view').children.length) renderBase(base); renderDetail(h.slice(2)); return; }
@@ -2315,7 +2335,7 @@ function route() {
   if (base === 'edit' && lastBase !== 'edit') resetPE();
   lastBase = base; if (base === 'noti') { renderNoti(true); return; } renderBase(base);
 }
-function renderBase(b) { ({ home: renderHome, rank: renderRank, create: renderCreate, chats: renderChats, me: renderMe, edit: renderEdit, reset: renderReset, noti: renderNoti, user: renderUser, search: renderSearch })[b](); }
+function renderBase(b) { ({ home: renderHome, rank: renderRank, create: renderCreate, chats: renderChats, me: renderMe, edit: renderEdit, reset: renderReset, noti: renderNoti, user: renderUser, search: renderSearch, support: renderSupport })[b](); }
 function rerender() {
   const h = curHash();
   if (h === 'new' || h.startsWith('ed-')) { if (!E.data) route(); return; }
