@@ -165,6 +165,7 @@ Deno.serve(async (req) => {
   let history: (Msg & { id: number; alts?: string[]; alt_idx?: number })[] = (hist || []).reverse();
 
   let userMsgId: number | null = null;
+  let editOriginal: { id: number; content: string; removed: any[] } | null = null;
   let regenTarget: { id: number; alts: string[] } | null = null;
   if (body.action === "regenerate") {
     const lastA = history[history.length - 1];
@@ -181,7 +182,9 @@ Deno.serve(async (req) => {
     const idx = history.findIndex((m) => m.id === Number(body.message_id));
     const lastUser = [...history].reverse().find((m) => m.role === "user");
     if (idx < 0 || !lastUser || lastUser.id !== history[idx].id) return err("마지막으로 보낸 메시지만 고칠 수 있어요");
-    const after = history.slice(idx + 1).map((m) => m.id);
+    const afterRows = history.slice(idx + 1);
+    editOriginal = { id: history[idx].id, content: history[idx].content, removed: afterRows };
+    const after = afterRows.map((m) => m.id);
     if (after.length) await admin.from("messages").delete().in("id", after);
     await admin.from("messages").update({ content: text }).eq("id", history[idx].id);
     history = history.slice(0, idx + 1); history[idx].content = text; userMsgId = history[idx].id;
@@ -209,9 +212,22 @@ Deno.serve(async (req) => {
     if (prev && prev.role === role) prev.parts[0].text += "\n\n" + m.content; else contents.push({ role, parts: [{ text: m.content }] });
   }
 
+  // a refused turn leaves no trace: drop the new user message / restore an edit
+  const undoTurn = async () => {
+    if (body.action === "send" && userMsgId) await admin.from("messages").delete().eq("id", userMsgId);
+    if (body.action === "edit" && editOriginal) {
+      await admin.from("messages").update({ content: editOriginal.content }).eq("id", editOriginal.id);
+      if (editOriginal.removed.length) await admin.from("messages").insert(editOriginal.removed.map((m: any) => ({ conversation_id: conv.id, user_id: user.id, role: m.role, content: m.content, alts: m.alts && m.alts.length ? m.alts : [m.content], alt_idx: m.alt_idx || 0 })));
+    }
+  };
+
   let upstream: Response;
   try { upstream = await callGemini(system, contents); }
-  catch (e) { console.error(e); return err("AI가 지금 답하지 못했어요. 잠시 후 '다시 생성'을 눌러 주세요.", 502); }
+  catch (e) {
+    console.error(e);
+    if (/SAFETY|PROHIBITED|blocked/i.test(String(e))) { await undoTurn(); return json({ blocked: true }, 200); }
+    return err("AI가 지금 답하지 못했어요. 잠시 후 '다시 생성'을 눌러 주세요.", 502);
+  }
 
   const enc = new TextEncoder(), dec = new TextDecoder();
   const stream = new ReadableStream({
@@ -220,6 +236,7 @@ Deno.serve(async (req) => {
       if (userMsgId) send({ user_id: userMsgId });
       let full = "", buf = "", blocked = "";
       const reader = upstream.body!.getReader();
+      try {
       try {
         while (true) {
           const { value, done } = await reader.read();
@@ -233,15 +250,19 @@ Deno.serve(async (req) => {
               const ev = JSON.parse(line.slice(5));
               const cand = ev.candidates?.[0];
               for (const part of cand?.content?.parts || []) if (part.text && !part.thought) { full += part.text; send({ d: part.text }); }
-              if (cand?.finishReason && ["SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST"].includes(cand.finishReason)) blocked = cand.finishReason;
+              if (cand?.finishReason && ["SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "IMAGE_SAFETY"].includes(cand.finishReason)) blocked = cand.finishReason;
               if (ev.promptFeedback?.blockReason) blocked = ev.promptFeedback.blockReason;
             } catch { /* partial line */ }
           }
         }
       } catch (e) { console.error("stream", e); }
       full = full.trim();
-      if (!full) {
-        send({ error: blocked ? "이 내용에는 답할 수 없어요. 다른 방향으로 이야기를 이어가 보세요." : "답장을 받지 못했어요. '다시 생성'을 눌러 주세요." });
+      if (blocked && body.action !== "regenerate") {
+        // the reply was refused: forget the partial text and the user's turn
+        await undoTurn();
+        send({ blocked: true });
+      } else if (!full) {
+        send({ error: blocked ? "이 답장은 만들 수 없어요. 다른 방향으로 이야기를 이어가 보세요." : "답장을 받지 못했어요. '다시 생성'을 눌러 주세요." });
       } else {
         const reply = full.slice(0, 8000);
         if (regenTarget) {
@@ -262,7 +283,8 @@ Deno.serve(async (req) => {
           if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(job);
         }
       }
-      ctrl.close();
+      } catch (e) { console.error("finish", e); try { send({ error: "답장을 받지 못했어요. '다시 생성'을 눌러 주세요." }); } catch { /* closed */ } }
+      try { ctrl.close(); } catch { /* already closed */ }
     },
   });
   return new Response(stream, { headers: { ...CORS, "content-type": "text/event-stream", "cache-control": "no-cache" } });

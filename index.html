@@ -606,6 +606,21 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .csort{display:flex;gap:4px;padding:14px 16px 6px}
 .csort button{height:32px;padding:0 14px;border-radius:99px;background:var(--card);color:var(--text3);font-size:13.5px;font-weight:600}
 .csort button.on{background:var(--card2);color:var(--text)}
+.flash{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translateX(-50%);z-index:96;display:flex;align-items:center;gap:10px;width:min(calc(100vw - 32px),520px);padding:13px 16px;border-radius:14px;background:#3a1a24;border:1px solid rgba(255,90,110,.45);color:#ffd5dc;font-size:14.5px;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:dropin .3s var(--ease);transition:opacity .4s,transform .4s}
+.flash .ico{flex:none;width:20px;height:20px;color:#ff8a95}
+.flash.out{opacity:0;transform:translate(-50%,-10px)}
+@keyframes dropin{from{opacity:0;transform:translate(-50%,-12px)}}
+.sortsel{overflow-x:auto;scrollbar-width:none;max-width:100%}
+.rowh.pad2{flex-wrap:wrap}
+.rowh.pad2 .sortsel{flex-basis:100%;justify-content:space-between}
+.rowh.pad2 .sortsel button{flex:1}
+.sortsel::-webkit-scrollbar{display:none}
+.sortsel button{flex:none;white-space:nowrap}
+.rowh.pad2{align-items:center}
+.noimg{display:grid;place-items:center;width:100%;height:100%;background:#2e2b33;color:#6f6a76}
+.noimg .ico{width:38%;height:38%;max-width:96px;max-height:96px;fill:currentColor;stroke:none}
+.card .art .noimg{position:absolute;inset:0}
+.d-hero>.noimg .ico{width:28%;height:28%}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -809,7 +824,7 @@ function missing(d) {
 function dataFromRow(r) {
   const p = r.plot || {}; const d = blankData();
   Object.assign(d, { title: r.name || '', desc: r.intro || '', tagline: r.tagline || '', tags: r.tags || [], cat: r.category || '일상', covers: r.images || [], isPublic: r.status === 'published' ? r.is_public : (p.isPublic ?? true), allowComments: r.allow_comments ?? true });
-  for (const k of ['rules', 'chars', 'personas', 'examples', 'lore', 'intro', 'customOn', 'customMd', 'showExamples', 'commentOn', 'comment']) if (p[k] !== undefined) d[k] = p[k];
+  for (const k of ['gender', 'rules', 'chars', 'personas', 'examples', 'lore', 'intro', 'customOn', 'customMd', 'showExamples', 'commentOn', 'comment']) if (p[k] !== undefined) d[k] = p[k];
   d.style = Object.assign(d.style, p.style || {});
   if (!d.chars.length) d.chars = [{ name: '', desc: '', images: [] }];
   return d;
@@ -932,6 +947,7 @@ function tabAbout() {
       <div class="fld"><span>해시태그 <em>${d.tags.length}/${LIM.tags}</em></span><p class="hint" style="margin-top:-2px">해시태그가 있으면 검색에 잘 나와요.</p>
         <div class="tagbox">${d.tags.map((t, i) => `<span class="tagx">#${esc(t)}<button data-deltag="${i}" aria-label="태그 삭제">${I.close}</button></span>`).join('')}
         ${d.tags.length < LIM.tags ? `<input id="tagIn" maxlength="12" placeholder="+ 태그 입력 후 엔터" enterkeyhint="done">` : ''}</div></div>
+      <div class="fld"><span>캐릭터 성별 <em>홈의 여자/남자 추천에 쓰여요</em></span><div class="chips wrap">${[['f', '여자'], ['m', '남자'], ['', '정하지 않음']].map(([k, l]) => `<button class="chip ${(d.gender || '') === k ? 'on' : ''}" data-edgender="${k}">${l}</button>`).join('')}</div></div>
       <div class="fld"><span>카테고리</span><div class="chips wrap">${CATS.filter(c => c !== '전체').map(c => `<button class="chip ${d.cat === c ? 'on' : ''}" data-edcat="${c}">${c}</button>`).join('')}</div></div>
     </div>
     <h3 class="edh">소개글</h3>
@@ -986,7 +1002,7 @@ function buildRow(publish) {
   return {
     name: (d.title.trim() || '제목 없는 캐릭터').slice(0, 40), tagline: d.tagline.trim().slice(0, 80), intro: d.desc.slice(0, 2400), greeting: firstMsg ? firstMsg.text.slice(0, 500) : '',
     category: d.cat, tags: d.tags.slice(0, 10), image_url: img, images: d.covers.slice(0, 10), status, is_public: status === 'published' && d.isPublic, allow_comments: d.allowComments,
-    plot: { v: 1, rules: d.rules, chars: d.chars, personas: d.personas, examples: d.examples, lore: d.lore, style: d.style, intro: d.intro, customOn: d.customOn, customMd: d.customMd, showExamples: d.showExamples, commentOn: d.commentOn, comment: d.comment, isPublic: d.isPublic },
+    plot: { v: 1, gender: d.gender || '', rules: d.rules, chars: d.chars, personas: d.personas, examples: d.examples, lore: d.lore, style: d.style, intro: d.intro, customOn: d.customOn, customMd: d.customMd, showExamples: d.showExamples, commentOn: d.commentOn, comment: d.comment, isPublic: d.isPublic },
   };
 }
 async function saveEditor(publish, thenClose) {
@@ -1079,6 +1095,7 @@ document.addEventListener('click', e => {
   if ((m = t.closest('[data-introsave]'))) { const v = $('#introEdit').value.trim(); if (v) E.data.intro[+m.dataset.introsave].text = v; E.editing = -1; touch(); renderEditor(true); return; }
   if ((m = t.closest('[data-introdel]'))) { E.data.intro.splice(+m.dataset.introdel, 1); touch(); renderEditor(true); return; }
   if ((m = t.closest('[data-deltag]'))) { E.data.tags.splice(+m.dataset.deltag, 1); touch(); renderEditor(true); return; }
+  if ((m = t.closest('[data-edgender]'))) { E.data.gender = m.dataset.edgender; touch(); renderEditor(true); return; }
   if ((m = t.closest('[data-edcat]'))) { E.data.cat = m.dataset.edcat; touch(); renderEditor(true); return; }
   if ((m = t.closest('[data-tgl]')) && !m.disabled) { const k = m.dataset.tgl; E.data[k] = !E.data[k]; touch(); renderEditor(true); return; }
   if ((m = t.closest('[data-pub]'))) { E.data.isPublic = m.dataset.pub === '1'; touch(); renderEditor(true); return; }
@@ -1210,7 +1227,7 @@ function introHTML() {
 const mainName = () => { const c = C.char; return (c.plot && c.plot.chars[0] && c.plot.chars[0].name) || c.name; };
 function msgHTML(m, last, lastUser) {
   if (C.sending && C.regenId === m.id) return `<div class="dl char" id="streaming"><span class="dav">${chatAvatar(0)}</span><div><small>${esc(mainName())}</small><p>${C.streamText ? inlineMd(C.streamText) : '<span class="typing"><i></i><i></i><i></i></span>'}</p></div></div>`;
-  if (C.editId === m.id && !C.selMode) return `<div class="dl user editing"><div class="medit"><textarea id="editIn" rows="3" maxlength="2000">${esc(m.content)}</textarea><div class="macts end"><button class="mini" data-editcancel>취소</button><button class="savebtn" data-editsend="${m.id}">수정해서 다시 받기</button></div></div></div>`;
+  if (C.editId === m.id && !C.selMode) return `<div class="dl user editing"><div class="medit"><textarea id="editIn" rows="3" maxlength="2000">${esc(window.__editDraft != null ? window.__editDraft : m.content)}</textarea><div class="macts end"><button class="mini" data-editcancel>취소</button><button class="savebtn" data-editsend="${m.id}">수정해서 다시 받기</button></div></div></div>`;
   const sel = C.selMode ? `<span class="selbox ${C.sel.has(m.id) ? 'on' : ''}" aria-hidden="true">${C.sel.has(m.id) ? '✓' : ''}</span>` : '';
   const attrs = `data-mid="${m.id}" ${C.selMode ? `data-pickmsg="${m.id}" role="checkbox" aria-checked="${C.sel.has(m.id)}" tabindex="0"` : ''}`;
   const pp = C.conv.persona;
@@ -1264,6 +1281,7 @@ async function sendChat(text, regen, editId) {
       if (!regen && !editId && r.status !== 502) { C.msgs.pop(); window.__chatDraft = text; }
       throw new Error(j.error || '답장을 받지 못했어요');
     }
+    if ((r.headers.get('content-type') || '').includes('application/json')) { const j = await r.json(); if (j.blocked) throw Object.assign(new Error('blocked'), { blocked: true }); }
     const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '';
     while (true) {
       const { value, done } = await reader.read(); if (done) break;
@@ -1274,6 +1292,7 @@ async function sendChat(text, regen, editId) {
         const ev = JSON.parse(line.slice(5));
         if (ev.user_id) { const t = C.msgs.find(m => m.id === 'tmp'); if (t) t.id = ev.user_id; }
         if (ev.d) { C.streamText += ev.d; if (C.id === id) { const el = $('#streaming p'); if (el) { el.innerHTML = inlineMd(C.streamText); if (!C.regenId) window.scrollTo(0, document.body.scrollHeight); } } }
+        if (ev.blocked) throw Object.assign(new Error('blocked'), { blocked: true });
         if (ev.error) throw new Error(ev.error);
         if (ev.done) {
           const content = C.streamText.trim();
@@ -1283,10 +1302,30 @@ async function sendChat(text, regen, editId) {
         }
       }
     }
-  } catch (e) { if (e.name !== 'AbortError') C.err = e.message || '답장을 받지 못했어요'; }
+  } catch (e) {
+    if (e.blocked) {
+      /* refused: the turn is gone on the server too; give the text back to the input */
+      if (editId) { await reloadMsgs(id); C.editId = editId; window.__editDraft = text; }
+      else if (!regen) { const lm = C.msgs[C.msgs.length - 1]; if (lm && lm.role === 'user' && (lm.id === 'tmp' || lm.content === text)) C.msgs.pop(); window.__chatDraft = text; }
+      flashBanner('부적절한 내용이라 대화를 이어갈 수 없어요. 다른 표현으로 다시 시도해 주세요.');
+    } else if (e.name !== 'AbortError') {
+      C.err = /load failed|failed to fetch|network/i.test(e.message || '') ? '연결이 끊겼어요. 다시 시도해 주세요.' : (e.message || '답장을 받지 못했어요');
+      await reloadMsgs(id);
+    }
+  }
   C.sending = false; C.streamText = ''; C.abort = null; C.regenId = null;
   if (C.id === id && curHash() === 'chat-' + id) renderChat(false);
   loadConvs();
+}
+async function reloadMsgs(id) {
+  const { data } = await sb.from('messages').select('id,role,content,alts,alt_idx,created_at').eq('conversation_id', id).order('id', { ascending: true }).limit(500);
+  if (data && C.id === id) C.msgs = data;
+}
+function flashBanner(text) {
+  const old = document.querySelector('.flash'); if (old) old.remove();
+  const el = document.createElement('div'); el.className = 'flash'; el.setAttribute('role', 'alert');
+  el.innerHTML = `${I.shield}<span>${esc(text)}</span>`; document.body.append(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, 5000);
 }
 async function pickAlt(k) {
   const m = [...C.msgs].reverse().find(x => x.role === 'assistant'); if (!m || !m.alts || k < 0 || k >= m.alts.length) return;
@@ -1396,8 +1435,8 @@ document.addEventListener('click', async e => {
   if (t.closest('[data-regen]')) { sendChat('', true); return; }
   if ((m = t.closest('[data-alt]')) && !m.disabled) { pickAlt(+m.dataset.alt); return; }
   if (t.closest('[data-editmsg]')) { const u = [...C.msgs].reverse().find(x => x.role === 'user'); if (u) { C.editId = u.id; const y = window.scrollY; renderChat(false); window.scrollTo(0, y); const el = $('#editIn'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } } return; }
-  if (t.closest('[data-editcancel]')) { C.editId = null; renderChat(false); return; }
-  if ((m = t.closest('[data-editsend]'))) { const v = $('#editIn').value.trim(); if (v) sendChat(v, false, +m.dataset.editsend); return; }
+  if (t.closest('[data-editcancel]')) { C.editId = null; window.__editDraft = null; renderChat(false); return; }
+  if ((m = t.closest('[data-editsend]'))) { const v = $('#editIn').value.trim(); window.__editDraft = null; if (v) sendChat(v, false, +m.dataset.editsend); return; }
   if (t.closest('[data-chatmenu]')) { if (!S.personas) await loadPersonas(); openDrawer('main'); return; }
   if ((m = t.closest('[data-drpage]'))) { DR.edit = null; DR.img = null; openDrawer(m.dataset.drpage); return; }
   if (t.closest('[data-newchat]')) { closeSheet(); startChat(C.char, true); return; }
@@ -1553,7 +1592,7 @@ const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY, { auth
 const onNetlify = /netlify\.app$/.test(location.hostname);
 const fromRow = r => ({ id: r.slug || r.id, dbId: r.id, name: r.name, en: (r.art && r.art.en) || '', cat: r.category || '일상', tags: r.tags || [], tl: r.tagline || '', intro: r.intro || '', pers: r.personality || '', talk: r.speech || '', world: r.world || '', greet: r.greeting || '',
   art: r.art || autoArt(r.id), img: r.image_url, images: r.images || [], plot: r.plot && r.plot.v ? r.plot : null, status: r.status || 'published',
-  official: r.is_official, isPublic: r.is_public, owner: r.owner_id, allowComments: r.allow_comments !== false, stats: { chats: r.chat_count || 0, msgs: r.message_count || 0, favs: r.favorite_count || 0, comments: r.comment_count || 0 } });
+  gender: (r.plot && r.plot.gender) || (r.art && r.art.gender) || '', official: r.is_official, isPublic: r.is_public, owner: r.owner_id, allowComments: r.allow_comments !== false, stats: { chats: r.chat_count || 0, msgs: r.message_count || 0, favs: r.favorite_count || 0, comments: r.comment_count || 0 } });
 const CHAR_COLS = 'id,slug,owner_id,name,tagline,intro,personality,speech,world,greeting,category,tags,art,image_url,images,plot,status,allow_comments,is_public,is_official,chat_count,message_count,favorite_count,comment_count,created_at';
 async function loadCharacters() {
   if (!sb) throw new Error('no client');
@@ -1596,7 +1635,7 @@ const I = {
 function toast(t) { const o = document.querySelector('.toast'); if (o) o.remove(); const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; document.body.append(e); setTimeout(() => e.remove(), 2200); }
 const byId = id => CHARS.find(c => c.id === id);
 const byDb = dbId => CHARS.find(c => c.dbId === dbId);
-function pic(c, uid) { return c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}">` : art(c, uid); }
+function pic(c) { return c.img ? `<img src="${esc(c.img)}" alt="${esc(c.name)}">` : `<span class="noimg" role="img" aria-label="${esc(c.name)} 이미지 없음">${I.user}</span>`; }
 const curHash = () => (location.hash || '#home').slice(1);
 
 /* ============ favorites ============ */
@@ -1847,6 +1886,7 @@ function headerHome(rank) {
 }
 const popScore = c => c.stats ? c.stats.favs * 3 + c.stats.msgs + c.stats.chats * 2 : 0;
 function sorted(list) {
+  if (S.sort === 'f' || S.sort === 'm') return list.filter(c => c.gender === S.sort).sort((a, b) => popScore(b) - popScore(a));
   if (S.sort === 'pop') return list.slice().sort((a, b) => popScore(b) - popScore(a));
   if (S.sort === 'new') return list.slice().sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
   return list;
@@ -1877,7 +1917,7 @@ function renderHome() {
     ${browse ? rowHTML('팔로잉', '내가 팔로우한 제작자의 캐릭터', followed) + rowHTML('새로 나온 캐릭터', '방금 등록된 따끈한 이야기', fresh, 'new') + rowHTML('지금 인기', '찜과 대화가 많은 캐릭터', hot, 'pop') : ''}
     <div class="sec"><div class="chips" role="tablist" aria-label="카테고리">${CATS.map(c => `<button class="chip ${S.cat === c ? 'on' : ''}" role="tab" aria-selected="${S.cat === c}" data-cat="${c}">${c}</button>`).join('')}</div></div>
     <div class="sec"><div class="rowh pad2"><div><h2>${searching ? `"${esc(S.q.trim())}" 검색 결과` : S.cat === '전체' ? '모든 캐릭터' : esc(S.cat)}</h2><p>${list.length}개</p></div>
-      <div class="sortsel" role="tablist" aria-label="정렬">${[['rec', '추천'], ['pop', '인기'], ['new', '최신']].map(([k, l]) => `<button class="${S.sort === k ? 'on' : ''}" data-sort="${k}">${l}</button>`).join('')}</div></div>
+      <div class="sortsel" role="tablist" aria-label="정렬">${[['rec', '추천'], ['f', '여자 추천'], ['m', '남자 추천'], ['pop', '인기'], ['new', '최신']].map(([k, l]) => `<button class="${S.sort === k ? 'on' : ''}" data-sort="${k}">${l}</button>`).join('')}</div></div>
       ${list.length ? `<div class="grid">${list.map(cardHTML).join('')}</div>` : '<div class="empty"><b>맞는 캐릭터를 찾지 못했어요</b>캐릭터 이름, #태그, 제작자 이름으로 검색해 보세요.</div>'}</div>`;
   bindHome();
 }
