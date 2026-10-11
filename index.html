@@ -1063,6 +1063,22 @@ async function tmpReplaceOfficialImage(id, file) {
     toast('대표 이미지를 바꿨어요'); setTimeout(() => location.reload(), 700);
   } catch (e) { toast('이미지를 바꾸지 못했어요'); }
 }
+const TMP_FIELDS = [['name', '이름', 40, 0], ['tagline', '한 줄 소개', 80, 0], ['intro', '소개', 2400, 4], ['personality', '성격', 2000, 4], ['speech', '말투', 1500, 4], ['world', '세계관', 3000, 4], ['greeting', '첫 인사', 500, 3]];
+async function tmpEditOfficial(id) {
+  const { data, error } = await sb.from('characters').select('id,' + TMP_FIELDS.map(f => f[0]).join(',')).eq('id', id).maybeSingle();
+  if (error || !data) { toast('불러오지 못했어요'); return; }
+  document.body.classList.add('sheet-open');
+  $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-label="내용 수정"><div class="grab"></div><h2>내용 수정</h2>
+    ${TMP_FIELDS.map(([k, l, max, rows]) => `<label class="fld"><span><b class="lab">${l}</b><em>${max}자</em></span>${rows ? `<textarea id="tf-${k}" maxlength="${max}" rows="${rows}">${esc(data[k] || '')}</textarea>` : `<input id="tf-${k}" maxlength="${max}" value="${esc(data[k] || '')}">`}</label>`).join('')}
+    <button class="btn" data-tmpsave="${esc(id)}">저장</button><button class="linkbtn" data-close>취소</button></div>`;
+}
+async function tmpSaveOfficial(id) {
+  const row = {}; TMP_FIELDS.forEach(([k]) => { row[k] = ($('#tf-' + k) || {}).value || ''; });
+  if (!row.name.trim()) { toast('이름을 입력해 주세요'); return; }
+  const { data, error } = await sb.from('characters').update(row).eq('id', id).eq('is_official', true).select('id');
+  if (error || !data || !data.length) { toast('저장하지 못했어요'); return; }
+  closeSheet(); toast('저장했어요'); setTimeout(() => location.reload(), 700);
+}
 async function uploadEdImage(file, target) {
   if (!file) return;
   if (!/^image\//.test(file.type)) { toast('사진 파일만 올릴 수 있어요'); return; }
@@ -2425,7 +2441,9 @@ document.addEventListener('click', e => {
   if ((m = t.closest('[data-pvview]'))) { openPreview(m.dataset.pvview === 'cover'); return; }
   if ((m = t.closest('[data-personas]'))) { const c = byId(m.dataset.personas) || (S.mine || []).find(x => x.id === m.dataset.personas) || PREVIEW_C; if (c && c.plot) showPersonas(c); return; }
   if ((m = t.closest('[data-dmore]'))) { const c = byId(m.dataset.dmore) || (S.mine || []).find(x => x.id === m.dataset.dmore); const mine = c && S.user && c.owner === S.user.id;
-    document.body.classList.add('sheet-open'); $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet"><div class="grab"></div><div class="menu" style="margin:0"><button class="mi" data-copylink>${I.share}링크 복사</button>${mine ? `<a class="mi" href="#ed-${c.dbId}" data-close>${I.pen}수정하기</a>` : `<button class="mi" data-report="character:${c.dbId}" style="color:#ffb3bf">${I.shield}신고하기</button>`}${c && c.official && S.user && S.user.id === TMP_ADMIN ? `<button class="mi" data-tmpimg="${c.dbId}">${I.pen}대표 이미지 교체</button>` : ''}</div></div>`; return; }
+    document.body.classList.add('sheet-open'); $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet"><div class="grab"></div><div class="menu" style="margin:0"><button class="mi" data-copylink>${I.share}링크 복사</button>${mine ? `<a class="mi" href="#ed-${c.dbId}" data-close>${I.pen}수정하기</a>` : `<button class="mi" data-report="character:${c.dbId}" style="color:#ffb3bf">${I.shield}신고하기</button>`}${c && c.official && S.user && S.user.id === TMP_ADMIN ? `<button class="mi" data-tmpimg="${c.dbId}">${I.pen}대표 이미지 교체</button><button class="mi" data-tmpedit="${c.dbId}">${I.pen}내용 수정</button>` : ''}</div></div>`; return; }
+  if ((m = t.closest('[data-tmpedit]'))) { tmpEditOfficial(m.dataset.tmpedit); return; }
+  if (t.closest('[data-tmpsave]')) { tmpSaveOfficial(t.closest('[data-tmpsave]').dataset.tmpsave); return; }
   if ((m = t.closest('[data-tmpimg]'))) { const id = m.dataset.tmpimg; closeSheet(); const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.onchange = () => tmpReplaceOfficialImage(id, inp.files[0]); inp.click(); return; }
   if (t.closest('[data-back]')) { location.hash = lastBase === 'user' && U.id ? '#u-' + U.id : '#' + lastBase; return; }
   if (t.closest('[data-share]') || t.closest('[data-shareprof]')) {
