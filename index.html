@@ -135,7 +135,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* my page */
 .pcard{margin:6px 16px 0;border-radius:var(--r-lg);overflow:hidden;background:var(--bg2)}
-.banner{position:relative;display:block;aspect-ratio:3/1;background:radial-gradient(80% 140% at 20% 0%,rgba(255,79,154,.55),transparent 60%),radial-gradient(60% 120% at 90% 100%,rgba(180,140,255,.4),transparent 60%),#24171f;background-size:cover;background-position:center}
+.banner{position:relative;display:block;aspect-ratio:3/1;background:var(--card);background-size:cover;background-position:center}
 .banner img{width:100%;height:100%;object-fit:cover;display:block}
 .pbody{position:relative;padding:0 20px 20px}
 .prow{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:-42px}
@@ -172,7 +172,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 /* profile edit */
 .edit{display:grid;gap:18px;padding:6px 16px 0}
-.eban{position:relative;display:block;aspect-ratio:3/1;border-radius:var(--r-md);overflow:hidden;cursor:pointer;background:radial-gradient(80% 140% at 20% 0%,rgba(255,79,154,.55),transparent 60%),radial-gradient(60% 120% at 90% 100%,rgba(180,140,255,.4),transparent 60%),#24171f}
+.eban{position:relative;display:block;aspect-ratio:3/1;border-radius:var(--r-md);overflow:hidden;cursor:pointer;background:var(--card)}
 .eban img{width:100%;height:100%;object-fit:cover;display:block}
 .eban .cam,.eav .cam{position:absolute;display:grid;place-items:center;border-radius:50%;background:rgba(10,9,12,.6);color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .eban .cam{right:10px;bottom:10px;width:38px;height:38px}
@@ -654,6 +654,10 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .srempty p{margin:0;color:var(--text3);font-size:15px}
 .srempty b{font-size:16px;margin-bottom:10px}
 .srempty .btn{flex:none;padding:0 22px}
+
+/* default avatar */
+.bav .noimg,.pav .noimg,.eav .noimg{border-radius:50%;align-items:end}
+.bav .noimg .ico,.pav .noimg .ico,.eav .noimg .ico{width:78%;height:78%;margin-bottom:-6%}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -1815,7 +1819,7 @@ async function onSession(session) {
   S.authReady = true; rerender();
 }
 const initial = n => esc((n || '?').trim().charAt(0).toUpperCase() || '?');
-const avatar = p => p && p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : initial(p && p.nickname);
+const avatar = p => p && p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : `<span class="noimg" role="img" aria-label="기본 프로필">${I.user}</span>`;
 
 const AUTH = { mode: 'login', busy: false, msg: '', msgKind: '' };
 function openAuth(mode) { AUTH.mode = mode || 'login'; AUTH.msg = ''; renderAuth(); }
@@ -2134,7 +2138,7 @@ function renderEdit() {
   $('#view').innerHTML = `<form class="edit" id="editForm" novalidate>
     <label class="eban" aria-label="배너 바꾸기">${p.banner_url ? `<img src="${esc(p.banner_url)}" alt="">` : ''}<input type="file" id="bannerIn" accept="image/*" hidden><span class="cam">${I.cam}</span></label>
     <label class="eav" aria-label="프로필 사진 바꾸기"><span class="pav">${avatar(p)}</span><input type="file" id="avatarIn" accept="image/*" hidden><span class="cam">${I.cam}</span></label>
-    <div class="minis">${p.banner_url ? '<button type="button" class="mini" data-rm="banner">기본 배너로</button>' : ''}${p.avatar_url ? '<button type="button" class="mini" data-rm="avatar">기본 프로필 사진으로</button>' : ''}<span class="hint">배너는 가로로 긴 사진(3:1)이 잘 어울려요.</span></div>
+    <div class="minis">${p.avatar_url ? '<button type="button" class="mini" data-rm="avatar">기본 프로필 사진으로</button>' : ''}${p.banner_url ? '<button type="button" class="mini" data-rm="banner">기본 배너로</button>' : ''}<span class="hint">배너는 가로로 긴 사진(3:1)이 잘 어울려요.</span></div>
     <label class="fld"><span>닉네임 <em id="nickCnt">${p.nickname.length}/24</em></span><input id="e-nick" name="nickname" maxlength="24" value="${esc(p.nickname)}" placeholder="다른 사람과 겹쳐도 괜찮아요" required></label>
     <label class="fld"><span>아이디 <em>영문 소문자·숫자·_ 3~20자</em></span><div class="at"><input id="e-handle" name="handle" maxlength="20" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(p.handle || '')}" placeholder="comma_lover" required></div><p class="hint">${p.handle ? '지금 쓰는 아이디예요.' : '다른 사람과 겹칠 수 없어요.'}</p></label>
     <label class="fld"><span>자기소개 <em id="bioCnt">${(p.bio || '').length}/300</em></span><textarea id="e-bio" name="bio" maxlength="300" rows="4" placeholder="캐릭터들에게 나를 소개해 보세요">${esc(p.bio || '')}</textarea></label>
