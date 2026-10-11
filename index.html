@@ -1663,7 +1663,7 @@ function charResults(q) {
   });
 }
 function srSorted(list) {
-  if (SR.sort === 'f' || SR.sort === 'm') return list.filter(c => c.gender === SR.sort).sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
+  if (SR.sort === 'f' || SR.sort === 'm') return list.filter(c => c.gender === FOR[SR.sort]).sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
   if (SR.sort === 'pop') return list.slice().sort((a, b) => popScore(b) - popScore(a));
   if (SR.sort === 'new') return list.slice().sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
   return list.slice().sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
@@ -1748,6 +1748,8 @@ async function loadCharacters() {
   const users = list.filter(c => !c.official).sort((x, y) => String(y.created || '').localeCompare(String(x.created || '')));
   return users.concat(list.filter(c => c.official));
 }
+/* 여자 추천 = 여성 유저에게 추천 = 남자 캐릭터, 남자 추천 = 여자 캐릭터 */
+const FOR = { f: 'm', m: 'f' };
 const userFirst = (x, y) => (x.official ? 1 : 0) - (y.official ? 1 : 0);
 
 /* ============ state ============ */
@@ -2061,7 +2063,7 @@ function headerHome(rank) {
 }
 const popScore = c => c.stats ? c.stats.favs * 3 + c.stats.msgs + c.stats.chats * 2 : 0;
 function sorted(list) {
-  if (S.sort === 'f' || S.sort === 'm') return list.filter(c => c.gender === S.sort).sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
+  if (S.sort === 'f' || S.sort === 'm') return list.filter(c => c.gender === FOR[S.sort]).sort((a, b) => userFirst(a, b) || popScore(b) - popScore(a));
   if (S.sort === 'pop') return list.slice().sort((a, b) => popScore(b) - popScore(a));
   if (S.sort === 'new') return list.slice().sort((a, b) => String(b.created || '').localeCompare(String(a.created || '')));
   return list;
