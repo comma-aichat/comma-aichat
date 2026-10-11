@@ -603,6 +603,9 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .medit{display:grid;gap:8px;width:100%}
 .medit textarea{width:100%;padding:12px 14px;border-radius:14px;background:var(--card);border:1.5px solid var(--pink);color:var(--text);font:inherit;font-size:16px;outline:0;resize:vertical}
 .medit .macts{gap:12px}
+.csort{display:flex;gap:4px;padding:14px 16px 6px}
+.csort button{height:32px;padding:0 14px;border-radius:99px;background:var(--card);color:var(--text3);font-size:13.5px;font-weight:600}
+.csort button.on{background:var(--card2);color:var(--text)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -1561,7 +1564,7 @@ async function loadCharacters() {
 
 /* ============ state ============ */
 const store = { get(k, d) { try { const v = localStorage.getItem('comma.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('comma.' + k, JSON.stringify(v)); } catch (e) { } } };
-const S = { sort: 'rec', followIds: null, convs: null, unread: 0, noti: null, cat: '전체', q: '', searchOpen: false, favs: new Set(store.get('favs', [])), loading: true, offline: false, user: null, profile: null, authReady: false, mine: null, mineTab: 'pub', notice: 0 };
+const S = { chatSort: store.get('chatSort', 'new'), sort: 'rec', followIds: null, convs: null, unread: 0, noti: null, cat: '전체', q: '', searchOpen: false, favs: new Set(store.get('favs', [])), loading: true, offline: false, user: null, profile: null, authReady: false, mine: null, mineTab: 'pub', notice: 0 };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = s => document.querySelector(s);
 const fmt = n => n >= 10000 ? (n / 10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '') + '만' : Number(n || 0).toLocaleString();
@@ -1834,6 +1837,8 @@ const NOTICES = [
   ['아이디로 나만의 프로필을 만들어 보세요', '배너, 프로필 사진, 닉네임을 자유롭게', 'user'],
   ['이제 캐릭터와 대화할 수 있어요', '마음에 드는 캐릭터를 골라 첫 대화를 시작해 보세요', 'bubble'],
   ['미성년자 성적 콘텐츠는 금지예요', '만 18세 미만 캐릭터의 성적인 묘사·대화는 만들 수도, 나눌 수도 없어요', 'shield'],
+  ['문의·오류 제보·피드백은 오픈채팅으로', '카카오톡 오픈채팅 "아가똥꼬Comma"에 남겨 주세요. 답장은 따로 드리지 않아요', 'bubble'],
+  ['Comma는 아가똥꼬가 만들고 있어요', '지금은 베타 버전이라 모든 기능을 무료로 쓸 수 있어요', 'heart'],
 ];
 function headerHome(rank) {
   return `<header class="top"><nav class="htabs" aria-label="홈 메뉴"><a href="#home" class="${rank ? '' : 'on'}">홈</a><a href="#rank" class="${rank ? 'on' : ''}">랭킹</a></nav><span class="sp"></span>
@@ -1919,8 +1924,13 @@ function renderChats() {
   if (!S.user) { $('#view').innerHTML = shelf + `<div style="margin-top:16px">${needLogin('로그인하고 대화를 시작해요', '캐릭터와 나눈 대화가 여기에 저장되고, 언제든 이어서 할 수 있어요.')}</div>`; return; }
   if (S.convs === null) { $('#view').innerHTML = shelf + `<div class="sec">${skelGrid(2)}</div>`; loadConvs().then(() => { if (curHash() === 'chats') renderChats(); }); return; }
   const q = (S.cq || '').trim().toLowerCase();
-  const list = S.convs.filter(v => !q || v.c.name.toLowerCase().includes(q) || (v.last_message || '').toLowerCase().includes(q));
-  $('#view').innerHTML = shelf + `<div class="sort">최신순</div>` + (list.length ? `<div class="clist">${list.map(v => `<a class="crow" href="#chat-${v.id}"><span class="thumb">${pic(v.c, 'cl')}</span><span class="rtx"><b>${esc(v.c.name)}</b><span>${esc((v.last_message || '').replace(/\*/g, '')) || '대화를 시작해 보세요'}</span></span><small>${ago(v.updated_at)}</small></a>`).join('')}</div>`
+  /* one row per character: its most recently active conversation (others live under 이어 하기) */
+  const latest = new Map();
+  for (const v of S.convs) { const p = latest.get(v.character_id); if (!p || String(v.updated_at) > String(p.updated_at)) latest.set(v.character_id, v); }
+  const old = S.chatSort === 'old';
+  const list = [...latest.values()].filter(v => !q || v.c.name.toLowerCase().includes(q) || (v.last_message || '').toLowerCase().includes(q))
+    .sort((a, b) => old ? String(a.updated_at).localeCompare(String(b.updated_at)) : String(b.updated_at).localeCompare(String(a.updated_at)));
+  $('#view').innerHTML = shelf + `<div class="csort" role="tablist" aria-label="정렬"><button class="${old ? '' : 'on'}" data-chatsort="new" aria-selected="${!old}">최신순</button><button class="${old ? 'on' : ''}" data-chatsort="old" aria-selected="${old}">오래된순</button></div>` + (list.length ? `<div class="clist">${list.map(v => `<a class="crow" href="#chat-${v.id}"><span class="thumb">${pic(v.c, 'cl')}</span><span class="rtx"><b>${esc(v.c.name)}</b><span>${esc((v.last_message || '').replace(/\*/g, '')) || '대화를 시작해 보세요'}</span></span><small>${ago(v.updated_at)}</small></a>`).join('')}</div>`
     : `<div class="empty" style="margin-top:6px"><b>${q ? '찾는 대화가 없어요' : '아직 나눈 대화가 없어요'}</b>${q ? '' : '마음에 드는 캐릭터의 상세 화면에서 대화를 시작해 보세요.'}<a class="lnk" href="#home">캐릭터 둘러보기</a></div>`);
   const cq = $('#cq'); if (cq) cq.addEventListener('input', e => { S.cq = e.target.value; const pos = cq.selectionStart; renderChats(); const n = $('#cq'); n.focus(); n.setSelectionRange(pos, pos); });
 }
@@ -2131,6 +2141,7 @@ document.addEventListener('click', e => {
   const rm = t.closest('[data-rm]'); if (rm) { removeImage(rm.dataset.rm); return; }
   const c = t.closest('[data-cat]'); if (c) { S.cat = c.dataset.cat; renderBase(lastBase); return; }
   const mt = t.closest('[data-minetab]'); if (mt) { S.mineTab = mt.dataset.minetab; renderCreate(); return; }
+  if ((m = t.closest('[data-chatsort]'))) { S.chatSort = m.dataset.chatsort; store.set('chatSort', S.chatSort); renderChats(); return; }
   if (t.closest('[data-chatsearch]')) { S.chatSearch = !S.chatSearch; if (!S.chatSearch) S.cq = ''; renderChats(); const q = $('#cq'); if (q) q.focus(); return; }
   if ((m = t.closest('[data-sort]'))) { S.sort = m.dataset.sort; renderHome(); if (m.classList.contains('lnk')) { const g = document.querySelector('.sortsel'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
   if ((m = t.closest('[data-q]'))) { S.q = m.dataset.q; pushRecentQ(S.q); renderHome(); return; }
