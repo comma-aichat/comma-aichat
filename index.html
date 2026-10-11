@@ -1983,7 +1983,7 @@ function renderMe() {
   $('#top').innerHTML = `<header class="top"><h1>마이페이지</h1><span class="sp"></span>${S.user ? `<button class="iconbtn" data-menu aria-label="설정 메뉴">${I.menu}</button>` : ''}</header>`;
   if (!S.authReady) { $('#view').innerHTML = `<div class="pcard"><div class="banner"></div><div class="pbody" style="padding-top:50px"><span class="sk" style="width:140px"></span><span class="sk short"></span></div></div>`; return; }
   if (!S.user) { $('#view').innerHTML = needLogin('나만의 Comma 시작하기', `로그인하면 찜과 프로필이 기기를 바꿔도 그대로 남아요.${S.favs.size ? ` 지금 찜한 ${S.favs.size}명도 함께 옮겨 드려요.` : ''}`) + footHTML(); return; }
-  const p = S.profile, nFav = S.favs.size, nMine = S.mine ? S.mine.length : 0;
+  const p = S.profile, nFav = S.favs.size, nMine = S.mine ? S.mine.filter(c => c.status === 'published').length : 0; /* drafts (미등록) don't count */
   $('#view').innerHTML = `<section class="pcard">
       <div class="banner">${p.banner_url ? `<img src="${esc(p.banner_url)}" alt="">` : ''}</div>
       <div class="pbody">
