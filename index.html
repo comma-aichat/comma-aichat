@@ -673,6 +673,19 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .sup .btn{flex:none;width:100%;margin-top:8px}
 .sup .btn[aria-disabled]{opacity:.45;pointer-events:none;box-shadow:none}
 .sup small{color:var(--text3);font-size:12.5px;word-break:keep-all}
+
+.perks{margin:14px 16px 0;padding:22px 18px;border-radius:var(--r-md);background:var(--bg2);border:1px solid var(--line);display:grid;gap:14px}
+.perks h3{margin:0 0 2px;font-family:var(--f-head);font-weight:800;font-size:18px;letter-spacing:-.02em;word-break:keep-all}
+.perks h3 b{color:var(--pink)}
+.perk{display:flex;gap:14px;align-items:flex-start}
+.perk .pic{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(255,79,154,.14);color:var(--pink)}
+.perk .pic .ico{width:26px;height:26px;fill:currentColor;stroke:none}
+.perk .pic.wing{background:rgba(255,214,120,.14);color:#ffd37a}
+.perk b{font-size:15.5px}
+.perk p,.pnote p{margin:3px 0 0;color:var(--text2);font-size:14px;line-height:1.6;word-break:keep-all}
+.pnote{margin-top:4px;padding:14px;border-radius:12px;background:var(--card2)}
+.pnote b{font-size:14px;color:var(--text)}
+.pnote em{font-style:normal;color:var(--pink2);font-weight:600}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -2201,8 +2214,14 @@ function renderSupport() {
   $('#view').innerHTML = `<section class="sup"><span class="em">${I.heart}</span><h2>Comma를 응원해 주세요</h2>
     <p>여러분의 후원은 큰 힘이 되고,<br>Comma를 더 좋은 앱으로 키우는 데 쓰여요.</p>
     ${DONATE_URL ? `<a class="btn" href="${esc(DONATE_URL)}" target="_blank" rel="noopener">${I.heart} 후원하러 가기</a>` : `<span class="btn" aria-disabled="true">후원 페이지를 준비하고 있어요</span>`}
-    <small>후원은 자유예요. 후원하지 않아도 모든 기능을 무료로 쓸 수 있어요.</small></section>${footHTML()}`;
+    <small>후원은 자유예요. 후원하지 않아도 모든 기능을 무료로 쓸 수 있어요.</small></section>
+    <section class="perks"><h3><b>500원</b>만 후원해도 이런 선물을 드려요</h3>
+      <div class="perk"><span class="pic wing">${WING}</span><div><b>후원자 배지</b><p>프로필 닉네임 옆에 천사 날개 배지를 달아 드려요.</p></div></div>
+      <div class="perk"><span class="pic">${I.heart}</span><div><b>후원자 명단</b><p>후원 탭의 '고마운 분들' 명단에 닉네임과 후원 금액이 올라가요.</p></div></div>
+      <div class="pnote"><b>꼭 확인해 주세요</b><p>후원할 때 메시지에 <em>Comma 아이디(@아이디)</em>를 적어 주세요. 확인한 뒤 배지를 달아 드려요.</p><p>명단에 이름을 올리고 싶지 않다면 메시지에 <em>명단 제외</em>라고 적어 주세요.</p></div>
+    </section>${footHTML()}`;
 }
+const WING = '<svg class="ico" viewBox="0 0 24 24"><path d="M22 3.5C15.5 3.6 9 6.6 5.3 12 3.6 14.5 2.8 17.3 2.6 20.6 5 19.2 7.6 18.6 10.3 18.4 8.6 17.8 7.4 17 6.6 16c3 .2 5.9-.4 8.4-1.8-1.8-.3-3.3-1-4.4-2 3.1-.3 5.9-1.5 7.9-3.5-1.5-.1-2.8-.5-3.9-1.1 3.3-.9 5.9-2.5 7.4-4.1z"/></svg>';
 function renderReset() {
   $('#top').innerHTML = `<header class="top"><a class="iconbtn" href="#me" aria-label="뒤로">${I.back}</a><h1>새 비밀번호</h1></header>`;
   $('#view').innerHTML = `<form class="edit" id="resetForm"><p class="hint" style="font-size:14px">${S.user ? '새로 쓸 비밀번호를 입력해 주세요.' : '메일의 재설정 링크로 들어오면 여기서 비밀번호를 바꿀 수 있어요.'}</p>
