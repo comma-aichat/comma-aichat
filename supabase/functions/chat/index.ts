@@ -55,7 +55,9 @@ function buildSystem(c: any, persona: { name?: string; desc?: string } | null, r
   if (p.chars && p.chars.length) {
     out.push(`[등장 캐릭터]\n` + p.chars.filter((x) => x.name).map((x) => `## ${x.name}\n${x.desc || "(설명 없음)"}`).join("\n\n"));
   } else {
-    out.push(`[등장 캐릭터]\n## ${c.name}\n성격: ${c.personality}\n말투: ${c.speech}\n세계관: ${c.world}`);
+    const b = c.basics || {};
+    const basics = [b.age && `나이: ${b.age}`, b.gender && `성별: ${b.gender}`, b.height && `키: ${b.height}`, b.looks && `외모: ${b.looks}`].filter(Boolean).join("\n");
+    out.push(`[등장 캐릭터]\n## ${c.name}\n${basics ? basics + "\n" : ""}성격: ${c.personality}\n말투: ${c.speech}\n세계관: ${c.world}`);
   }
   if (p.rules) out.push(`[제작자 규칙 — 반드시 지킬 것]\n${p.rules}`);
   if (persona && (persona.name || persona.desc)) out.push(`[유저가 연기하는 인물]\n이름: ${persona.name || "유저"}${persona.desc ? `\n${persona.desc}` : ""}\n캐릭터들은 유저를 이 인물로 대한다.`);
