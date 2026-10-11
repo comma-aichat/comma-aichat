@@ -656,8 +656,13 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .srempty .btn{flex:none;padding:0 22px}
 
 /* default avatar */
-.bav .noimg,.pav .noimg,.eav .noimg{border-radius:50%;align-items:end}
-.bav .noimg .ico,.pav .noimg .ico,.eav .noimg .ico{width:78%;height:78%;margin-bottom:-6%}
+.defav{display:block;width:100%;height:100%;border-radius:50%}
+
+/* basics */
+.basics{display:grid;gap:6px;margin:6px 0 14px;padding:12px 14px;border-radius:12px;background:var(--card2);font-size:14.5px;color:var(--text2);line-height:1.55}
+.basics p{margin:0}
+.basics .brow{color:var(--text);font-weight:600}
+.basics b{color:var(--pink2);margin-right:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -1720,9 +1725,9 @@ const safeStorage = {
 const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY, { auth: { storage: safeStorage, storageKey: 'comma.auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }) : null;
 const onNetlify = /netlify\.app$/.test(location.hostname);
 const fromRow = r => ({ id: r.slug || r.id, dbId: r.id, name: r.name, en: (r.art && r.art.en) || '', cat: r.category || '일상', tags: r.tags || [], tl: r.tagline || '', intro: r.intro || '', pers: r.personality || '', talk: r.speech || '', world: r.world || '', greet: r.greeting || '',
-  art: r.art || autoArt(r.id), img: r.image_url, images: r.images || [], plot: r.plot && r.plot.v ? r.plot : null, status: r.status || 'published',
+  art: r.art || autoArt(r.id), img: r.image_url, basics: r.basics || null, images: r.images || [], plot: r.plot && r.plot.v ? r.plot : null, status: r.status || 'published',
   gender: (r.plot && r.plot.gender) || (r.art && r.art.gender) || '', official: r.is_official, isPublic: r.is_public, owner: r.owner_id, allowComments: r.allow_comments !== false, stats: { chats: r.chat_count || 0, msgs: r.message_count || 0, favs: r.favorite_count || 0, comments: r.comment_count || 0 } });
-const CHAR_COLS = 'id,slug,owner_id,name,tagline,intro,personality,speech,world,greeting,category,tags,art,image_url,images,plot,status,allow_comments,is_public,is_official,chat_count,message_count,favorite_count,comment_count,created_at';
+const CHAR_COLS = 'id,slug,basics,owner_id,name,tagline,intro,personality,speech,world,greeting,category,tags,art,image_url,images,plot,status,allow_comments,is_public,is_official,chat_count,message_count,favorite_count,comment_count,created_at';
 async function loadCharacters() {
   if (!sb) throw new Error('no client');
   const { data, error } = await sb.from('characters').select(CHAR_COLS + ',profiles!characters_owner_id_fkey(nickname,handle)').eq('is_public', true).order('is_official', { ascending: false }).order('created_at');
@@ -1769,6 +1774,11 @@ function toast(t) { const o = document.querySelector('.toast'); if (o) o.remove(
 const byId = id => CHARS.find(c => c.id === id);
 const byDb = dbId => CHARS.find(c => c.dbId === dbId);
 /* Comma originals keep their illustrations; anything a creator left without an image gets the plain default */
+function basicsHTML(c) {
+  const b = c.basics; if (!b) return '';
+  const row = [b.age, b.gender, b.height].filter(Boolean).map(esc).join(' · ');
+  return `<div class="basics">${row ? `<p class="brow">${row}</p>` : ''}${b.looks ? `<p><b>외모</b> ${esc(b.looks)}</p>` : ''}</div>`;
+}
 function pic(c, uid) {
   if (c.img) return `<img src="${esc(c.img)}" alt="${esc(c.name)}">`;
   if (c.official && c.art) return art(c, uid);
@@ -1823,7 +1833,8 @@ async function onSession(session) {
   S.authReady = true; rerender();
 }
 const initial = n => esc((n || '?').trim().charAt(0).toUpperCase() || '?');
-const avatar = p => p && p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : `<span class="noimg" role="img" aria-label="기본 프로필">${I.user}</span>`;
+const DEFAV = '<svg class="defav" viewBox="0 0 100 100" role="img" aria-label="기본 프로필"><rect width="100" height="100" fill="#4a4650"/><circle cx="50" cy="39" r="17" fill="#9b97a0"/><path d="M15 100c0-21 15.5-33 35-33s35 12 35 33z" fill="#9b97a0"/></svg>';
+const avatar = p => p && p.avatar_url ? `<img src="${esc(p.avatar_url)}" alt="">` : DEFAV;
 
 const AUTH = { mode: 'login', busy: false, msg: '', msgKind: '' };
 function openAuth(mode) { AUTH.mode = mode || 'login'; AUTH.msg = ''; renderAuth(); }
@@ -1946,41 +1957,56 @@ function cropImage(file, w, h) {
 }
 const extOf = b => b.type === 'image/webp' ? 'webp' : 'jpg';
 function oldPath(url) { const m = url && url.match(/\/avatars\/(.+)$/); return m && decodeURIComponent(m[1]).startsWith(S.user.id + '/') ? decodeURIComponent(m[1]) : null; }
+/* 프로필 편집: 고른 사진은 '저장'을 눌러야 반영 */
+const PE = { avatar: null, banner: null };
+function resetPE() { for (const k of ['avatar', 'banner']) { if (PE[k] && PE[k].url) URL.revokeObjectURL(PE[k].url); PE[k] = null; } }
+const shownImg = (p, kind) => { const v = PE[kind]; return v === 'rm' ? null : v ? v.url : p[kind === 'banner' ? 'banner_url' : 'avatar_url']; };
 async function uploadImage(file, kind) {
   if (!file || !S.user) return;
-  if (!/^image\//.test(file.type)) { toast('사진 파일만 올릴 수 있어요'); return; }
+  if (!/^image\//.test(file.type) && !/\.(heic|heif)$/i.test(file.name || '')) { toast('사진 파일만 올릴 수 있어요'); return; }
   if (file.size > 20 * 1024 * 1024) { toast('20MB 이하 이미지를 골라 주세요'); return; }
-  toast(kind === 'banner' ? '배너를 올리는 중…' : '프로필 사진을 올리는 중…');
   try {
     const blob = kind === 'banner' ? await cropImage(file, 1200, 400) : await cropImage(file, 512, 512);
-    const path = `${S.user.id}/${kind}-${Date.now()}.${extOf(blob)}`;
-    const { error } = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type });
-    if (error) throw error;
-    const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
-    const col = kind === 'banner' ? 'banner_url' : 'avatar_url'; const old = S.profile[col];
-    const { error: e2 } = await sb.from('profiles').update({ [col]: url }).eq('id', S.user.id);
-    if (e2) throw e2;
-    S.profile[col] = url; rerender(); toast(kind === 'banner' ? '배너를 바꿨어요' : '프로필 사진을 바꿨어요');
-    const op = oldPath(old); if (op) sb.storage.from('avatars').remove([op]);
-  } catch (e) { toast('이미지를 올리지 못했어요. 다른 이미지로 시도해 주세요'); }
+    if (PE[kind] && PE[kind].url) URL.revokeObjectURL(PE[kind].url);
+    PE[kind] = { blob, url: URL.createObjectURL(blob) };
+    rerender(); toast('저장을 누르면 바뀌어요');
+  } catch (e) { toast('이 이미지는 쓸 수 없어요. 다른 이미지로 시도해 주세요'); }
 }
-async function removeImage(kind) {
-  const col = kind === 'banner' ? 'banner_url' : 'avatar_url'; const old = S.profile && S.profile[col]; if (!old) return;
-  const { error } = await sb.from('profiles').update({ [col]: null }).eq('id', S.user.id);
-  if (error) { toast('지우지 못했어요'); return; }
-  S.profile[col] = null; rerender(); toast(kind === 'banner' ? '기본 배너로 바꿨어요' : '기본 프로필로 바꿨어요');
-  const op = oldPath(old); if (op) sb.storage.from('avatars').remove([op]);
+function removeImage(kind) {
+  if (PE[kind] && PE[kind].url) URL.revokeObjectURL(PE[kind].url);
+  PE[kind] = 'rm'; rerender();
+}
+async function commitImages() {
+  const patch = {}, olds = [];
+  for (const kind of ['avatar', 'banner']) {
+    const v = PE[kind]; if (!v) continue;
+    const col = kind === 'banner' ? 'banner_url' : 'avatar_url';
+    if (v === 'rm') { patch[col] = null; }
+    else {
+      const path = `${S.user.id}/${kind}-${Date.now()}.${extOf(v.blob)}`;
+      const { error } = await sb.storage.from('avatars').upload(path, v.blob, { contentType: v.blob.type });
+      if (error) throw error;
+      patch[col] = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+    }
+    if (S.profile[col]) olds.push(S.profile[col]);
+  }
+  return { patch, olds };
 }
 async function saveProfile() {
   const f = $('#editForm'); if (!f) return;
   const nickname = f.nickname.value.trim(), handle = f.handle.value.trim().toLowerCase(), bio = f.bio.value.trim();
   if (!nickname) { toast('닉네임을 입력해 주세요'); f.nickname.focus(); return; }
   if (!HANDLE_RE.test(handle)) { toast('아이디는 영문 소문자·숫자·_로 3~20자예요'); f.handle.focus(); return; }
-  const btn = $('#saveBtn'); btn.setAttribute('aria-disabled', 'true'); btn.textContent = '저장 중';
-  const { error } = await sb.from('profiles').update({ nickname: nickname.slice(0, 24), handle, bio: bio.slice(0, 300) }).eq('id', S.user.id);
+  const btn = $('#saveBtn'); if (btn.getAttribute('aria-disabled')) return; btn.setAttribute('aria-disabled', 'true'); btn.textContent = '저장 중';
+  let imgs;
+  try { imgs = await commitImages(); } catch (e) { btn.removeAttribute('aria-disabled'); btn.textContent = '저장'; toast('사진을 올리지 못했어요. 다른 이미지로 시도해 주세요'); return; }
+  const upd = Object.assign({ nickname: nickname.slice(0, 24), handle, bio: bio.slice(0, 300) }, imgs.patch);
+  const { error } = await sb.from('profiles').update(upd).eq('id', S.user.id);
   btn.removeAttribute('aria-disabled'); btn.textContent = '저장';
   if (error) { toast(error.code === '23505' ? '이미 쓰고 있는 아이디예요' : '저장하지 못했어요'); return; }
-  Object.assign(S.profile, { nickname: nickname.slice(0, 24), handle, bio: bio.slice(0, 300) }); toast('프로필을 저장했어요'); location.hash = '#me';
+  Object.assign(S.profile, upd); resetPE();
+  const gone = imgs.olds.map(oldPath).filter(Boolean); if (gone.length) sb.storage.from('avatars').remove(gone);
+  toast('프로필을 저장했어요'); location.hash = '#me';
 }
 async function setNewPassword(form) {
   const pw = form.pw.value; if (pw.length < 6) { toast('비밀번호는 6자 이상이어야 해요'); return; }
@@ -2140,9 +2166,9 @@ function renderEdit() {
   const p = S.profile;
   $('#top').innerHTML = `<header class="top"><a class="iconbtn" href="#me" aria-label="뒤로">${I.back}</a><h1>프로필 편집</h1><span class="sp"></span><button class="savebtn" id="saveBtn" data-saveprof>저장</button></header>`;
   $('#view').innerHTML = `<form class="edit" id="editForm" novalidate>
-    <label class="eban" aria-label="배너 바꾸기">${p.banner_url ? `<img src="${esc(p.banner_url)}" alt="">` : ''}<input type="file" id="bannerIn" accept="image/*" hidden><span class="cam">${I.cam}</span></label>
-    <label class="eav" aria-label="프로필 사진 바꾸기"><span class="pav">${avatar(p)}</span><input type="file" id="avatarIn" accept="image/*" hidden><span class="cam">${I.cam}</span></label>
-    <div class="minis">${p.avatar_url ? '<button type="button" class="mini" data-rm="avatar">기본 프로필 사진으로</button>' : ''}${p.banner_url ? '<button type="button" class="mini" data-rm="banner">기본 배너로</button>' : ''}<span class="hint">배너는 가로로 긴 사진(3:1)이 잘 어울려요.</span></div>
+    <label class="eban" aria-label="배너 바꾸기">${shownImg(p, 'banner') ? `<img src="${esc(shownImg(p, 'banner'))}" alt="">` : ''}<input type="file" id="bannerIn" accept="image/*" hidden><span class="cam">${I.cam}</span></label>
+    <label class="eav" aria-label="프로필 사진 바꾸기"><span class="pav">${avatar({ nickname: p.nickname, avatar_url: shownImg(p, 'avatar') })}</span><input type="file" id="avatarIn" accept="image/*" hidden><span class="cam">${I.cam}</span></label>
+    <div class="minis">${shownImg(p, 'avatar') ? '<button type="button" class="mini" data-rm="avatar">기본 프로필 사진으로</button>' : ''}${shownImg(p, 'banner') ? '<button type="button" class="mini" data-rm="banner">기본 배너로</button>' : ''}<span class="hint">배너는 가로로 긴 사진(3:1)이 잘 어울려요.</span></div>
     <label class="fld"><span>닉네임 <em id="nickCnt">${p.nickname.length}/24</em></span><input id="e-nick" name="nickname" maxlength="24" value="${esc(p.nickname)}" placeholder="다른 사람과 겹쳐도 괜찮아요" required></label>
     <label class="fld"><span>아이디 <em>영문 소문자·숫자·_ 3~20자</em></span><div class="at"><input id="e-handle" name="handle" maxlength="20" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(p.handle || '')}" placeholder="comma_lover" required></div><p class="hint">${p.handle ? '지금 쓰는 아이디예요.' : '다른 사람과 겹칠 수 없어요.'}</p></label>
     <label class="fld"><span>자기소개 <em id="bioCnt">${(p.bio || '').length}/300</em></span><textarea id="e-bio" name="bio" maxlength="300" rows="4" placeholder="캐릭터들에게 나를 소개해 보세요">${esc(p.bio || '')}</textarea></label>
@@ -2152,8 +2178,8 @@ function renderEdit() {
   $('#e-handle').addEventListener('input', onHandleInput);
   $('#e-nick').addEventListener('input', e => $('#nickCnt').textContent = `${e.target.value.length}/24`);
   $('#e-bio').addEventListener('input', e => $('#bioCnt').textContent = `${e.target.value.length}/300`);
-  $('#bannerIn').addEventListener('change', e => uploadImage(e.target.files[0], 'banner'));
-  $('#avatarIn').addEventListener('change', e => uploadImage(e.target.files[0], 'avatar'));
+  $('#bannerIn').addEventListener('change', e => { uploadImage(e.target.files[0], 'banner'); e.target.value = ''; });
+  $('#avatarIn').addEventListener('change', e => { uploadImage(e.target.files[0], 'avatar'); e.target.value = ''; });
 }
 function renderReset() {
   $('#top').innerHTML = `<header class="top"><a class="iconbtn" href="#me" aria-label="뒤로">${I.back}</a><h1>새 비밀번호</h1></header>`;
@@ -2202,7 +2228,7 @@ function detailHTML(c, preview, coverView) {
     if (p.showExamples && p.examples.length) secs.push(`<section class="ds"><h3>상황 예시</h3><div class="dscene">${p.examples.map(x => line({ type: x.who === 'user' ? 'user' : 'char', ci: x.who === 'user' ? 0 : x.who, text: x.text })).join('')}</div></section>`);
     if (p.commentOn && p.comment) secs.push(`<section class="ds"><h3>크리에이터 코멘트</h3><p>${esc(p.comment)}</p></section>`);
   } else {
-    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b><div class="md"><p><b>성격</b></p><p>${esc(c.pers)}</p><br><p><b>말투</b></p><p>${esc(c.talk)}</p></div></div></section>`,
+    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}<div class="md"><p><b>성격</b></p><p>${esc(c.pers)}</p><br><p><b>말투</b></p><p>${esc(c.talk)}</p></div></div></section>`,
       `<section class="ds"><h3>인트로</h3><div class="dscene"><div class="dl char"><span class="dav">${pic(c, 'ia')}</span><div><small>${esc(c.name)}</small><p>${esc(c.greet)}</p></div></div></div></section>`);
   }
   const personas = p && p.personas.filter(x => x.name).length, lore = p && p.lore.some(l => l.keys.length);
@@ -2286,6 +2312,7 @@ function route() {
   if (isDetail) { if (!$('#view').children.length) renderBase(base); renderDetail(h.slice(2)); return; }
   $('#detail').innerHTML = '';
   if (base !== lastBase) window.scrollTo(0, 0);
+  if (base === 'edit' && lastBase !== 'edit') resetPE();
   lastBase = base; if (base === 'noti') { renderNoti(true); return; } renderBase(base);
 }
 function renderBase(b) { ({ home: renderHome, rank: renderRank, create: renderCreate, chats: renderChats, me: renderMe, edit: renderEdit, reset: renderReset, noti: renderNoti, user: renderUser, search: renderSearch })[b](); }
