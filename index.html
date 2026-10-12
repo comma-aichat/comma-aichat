@@ -26,8 +26,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .app{max-width:720px;margin:0 auto;min-height:100vh;padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 24px)}
 
 /* per-tab header */
-#top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(14,13,16,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;max-width:720px;margin:0 auto;z-index:30;background:rgba(14,13,16,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 #top:empty{display:none}
+#view{padding-top:var(--toph,0px)}
 .top{position:relative;z-index:20;display:flex;align-items:center;gap:6px;min-height:60px;padding:8px 16px;background:rgba(14,13,16,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .top h1{margin:0;font-family:var(--f-head);font-weight:800;font-size:23px;letter-spacing:-.02em}
 .htabs{display:flex;gap:16px;align-items:baseline}
@@ -1997,6 +1998,8 @@ function applyChatSet() { const t = BUBBLES.find(b => b[0] === S.chatSet.theme) 
 const saveChatSet = () => { store.set('chatSet', S.chatSet); applyChatSet(); };
 const S = { chatSet: Object.assign({ theme: 'basic', avatars: true, haptic: true }, store.get('chatSet', {})), chatEdit: false, chatPick: new Set(), chatSort: store.get('chatSort', 'new'), sort: 'rec', followIds: null, convs: null, unread: 0, noti: null, cat: '전체', q: '', searchOpen: false, favs: new Set(store.get('favs', [])), loading: true, offline: false, user: null, profile: null, authReady: false, mine: null, mineTab: 'pub', notice: 0 };
 applyChatSet();
+/* the top bar is fixed (in-app browsers drop sticky); #view is padded by its live height */
+(() => { const t = document.getElementById('top'); if (!t) return; const set = () => document.documentElement.style.setProperty('--toph', t.offsetHeight + 'px'); set(); if (window.ResizeObserver) new ResizeObserver(set).observe(t); else setInterval(set, 500); })();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = s => document.querySelector(s);
 const fmt = n => n >= 10000 ? (n / 10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '') + '만' : Number(n || 0).toLocaleString();
