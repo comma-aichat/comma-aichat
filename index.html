@@ -1395,15 +1395,16 @@ async function startChat(c, fresh) {
     <p class="sub">캐릭터들이 나를 이 인물로 대해요. 대화 중에도 오른쪽 위 메뉴에서 바꿀 수 있어요.</p>
     ${window.__pickList.map(row).join('')}</div>`;
 }
+let creatingConv = false;
 async function createConv(c, persona) {
-  closeSheet(); toast('대화를 준비하는 중…');
+  closeSheet(); if (creatingConv) return; creatingConv = true; toast('대화를 준비하는 중…');
   try {
     const r = await chatFetch({ action: 'start', character_id: c.dbId, persona: persona ? { name: persona.name, desc: persona.desc, image: persona.image } : null });
     const j = await r.json();
     if (!r.ok) { toast(j.error || '대화를 시작하지 못했어요'); return; }
     if (persona && persona.image) await sb.from('conversations').update({ persona: { name: persona.name, desc: persona.desc, image: persona.image } }).eq('id', j.conversation_id);
     await loadConvs(); location.hash = '#chat-' + j.conversation_id;
-  } catch (e) { toast('서버에 연결하지 못했어요'); }
+  } catch (e) { toast('서버에 연결하지 못했어요'); } finally { creatingConv = false; }
 }
 
 /* chat screen */
@@ -1564,10 +1565,17 @@ function openNewChat() {
   const cb = $('#ncSave'), nm = $('#ncName');
   cb.addEventListener('change', () => { nm.hidden = !cb.checked; });
 }
+let newChatBusy = false;
 async function confirmNewChat() {
+  if (newChatBusy) return;
   const save = $('#ncSave').checked, name = ($('#ncName').value || '').trim();
   const id = C.id, c = C.char; closeSheet();
-  if (save) {
+  const empty = !C.msgs.some(m => m.role === 'user');
+  newChatBusy = true;
+  try {
+  if (empty) {
+    /* nothing said yet: nothing to save, and the empty room stays hidden from 이어 하기 */
+  } else if (save) {
     const title = name || `${stamp(Date.now())}에 저장된 대화`;
     const { error } = await sb.from('conversations').update({ title }).eq('id', id).eq('user_id', S.user.id);
     if (error) { toast('저장하지 못했어요'); return; }
@@ -1575,7 +1583,8 @@ async function confirmNewChat() {
   } else {
     await sb.from('conversations').delete().eq('id', id).eq('user_id', S.user.id);
   }
-  await loadConvs(); startChat(c, true);
+  await loadConvs(); await startChat(c, true);
+  } finally { newChatBusy = false; }
 }
 async function renameConv(id) {
   const v = (S.convs || []).find(x => x.id === id), inp = $('#cvren-' + id); if (!v || !inp) return;
@@ -1608,7 +1617,7 @@ function openDrawer(page) {
     </div>
     <button class="drexit" data-leavechat>${I.out}대화방 나가기</button>`;
   } else if (DR.page === 'resume') {
-    const list = (S.convs || []).filter(v => v.character_id === C.char.dbId).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+    const list = (S.convs || []).filter(v => v.character_id === C.char.dbId && (v.id === C.id || v.message_count > 0)).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
     body = `<div class="drhead">${back}<h3>이어 하기</h3></div><p class="cvcount">${list.length}개</p><div class="drbody cvlist">${list.map(v => {
       const on = v.id === C.id, menu = DR.menu === v.id, ren = DR.rename === v.id, del = DR.del === v.id;
       return `<div class="cvrow ${on ? 'on' : ''}">${ren ? `<form class="cvren" data-cvrenform="${v.id}"><input id="cvren-${v.id}" maxlength="40" value="${esc(convTitle(v))}" aria-label="대화 제목"><button class="edbtn pri" type="submit">저장</button><button class="edbtn" type="button" data-cvcancel>취소</button></form>`
