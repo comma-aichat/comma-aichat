@@ -1372,7 +1372,7 @@ async function loadPersonas() {
 const convFor = c => (S.convs || []).find(v => v.character_id === c.dbId);
 const myProfilePersona = () => S.profile ? { name: S.profile.nickname, desc: S.profile.bio || '', image: S.profile.avatar_url || null, src: 'me' } : null;
 const fromMine = p => ({ name: p.name, desc: p.description || '', image: p.image_url || null, src: 'mine', pid: p.id });
-const personaAv = p => p && p.image ? `<img src="${esc(p.image)}" alt="">` : initial(p && p.name);
+const personaAv = p => p && p.image ? `<img src="${esc(p.image)}" alt="">` : DEFAV;
 function personaOptions(c) {
   const creator = (c.plot ? c.plot.personas.filter(x => x.name) : []).map(x => ({ name: x.name, desc: x.desc || '', image: null, src: 'creator' }));
   const mine = (S.personas || []).map(fromMine);
