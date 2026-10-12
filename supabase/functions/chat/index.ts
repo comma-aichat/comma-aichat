@@ -119,23 +119,57 @@ ${text}`;
   return "";
 }
 
+const FIRST_TOKEN_MS = 20000, IDLE_MS = 30000;
+// Read the first streamed chunk within FIRST_TOKEN_MS; a model that stalls is abandoned for the next one.
+async function openStream(model: string, system: string, contents: any[], lowThinking: boolean) {
+  const ac = new AbortController();
+  const generationConfig: any = { temperature: 0.95, topP: 0.95, maxOutputTokens: 2048 };
+  if (lowThinking) generationConfig.thinkingConfig = { thinkingLevel: "low" };
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, {
+    method: "POST", signal: ac.signal,
+    headers: { "content-type": "application/json", "x-goog-api-key": GEMINI_KEY },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents,
+      generationConfig,
+      safetySettings: ["HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_DANGEROUS_CONTENT"].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" })).concat([{ category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }]),
+    }),
+  });
+  if (!r.ok || !r.body) return { ok: false as const, status: r.status, text: (await r.text()).slice(0, 300) };
+  const reader = r.body.getReader();
+  let timer: number | undefined;
+  const first = await Promise.race([
+    reader.read(),
+    new Promise<null>((res) => { timer = setTimeout(() => res(null), FIRST_TOKEN_MS); }),
+  ]);
+  clearTimeout(timer);
+  if (!first) { ac.abort(); return { ok: false as const, status: 504, text: "first token timeout" }; }
+  // hand back a stream that replays the first chunk, then the rest, giving up if it goes quiet for IDLE_MS
+  const body = new ReadableStream<Uint8Array>({
+    start(ctrl) { if (first.value) ctrl.enqueue(first.value); if (first.done) ctrl.close(); },
+    async pull(ctrl) {
+      let t: number | undefined;
+      const next = await Promise.race([reader.read(), new Promise<null>((res) => { t = setTimeout(() => res(null), IDLE_MS); })]);
+      clearTimeout(t);
+      if (!next) { ac.abort(); ctrl.close(); return; }
+      if (next.done) { ctrl.close(); return; }
+      ctrl.enqueue(next.value);
+    },
+    cancel() { ac.abort(); },
+  });
+  return { ok: true as const, body };
+}
+
 async function callGemini(system: string, contents: any[]) {
   let last = "";
   for (const model of MODELS) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": GEMINI_KEY },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: system }] },
-        contents,
-        generationConfig: { temperature: 0.95, topP: 0.95, maxOutputTokens: 2048 },
-        safetySettings: ["HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_DANGEROUS_CONTENT"].map((category) => ({ category, threshold: "BLOCK_ONLY_HIGH" })).concat([{ category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }]),
-      }),
-    });
-    if (r.ok && r.body) return r;
-    last = `${model} ${r.status} ${(await r.text()).slice(0, 300)}`;
+    let res = await openStream(model, system, contents, true).catch((e) => ({ ok: false as const, status: 0, text: String(e) }));
+    // a model that does not take the thinking setting gets one plain retry
+    if (!res.ok && res.status === 400 && /thinking/i.test(res.text)) res = await openStream(model, system, contents, false).catch((e) => ({ ok: false as const, status: 0, text: String(e) }));
+    if (res.ok) return { body: res.body };
+    last = `${model} ${res.status} ${res.text}`;
     console.error("gemini failed", last);
-    if (![404, 429, 500, 503].includes(r.status)) break;
+    if (![0, 404, 429, 500, 503, 504].includes(res.status)) break;
   }
   throw new Error(last);
 }
@@ -241,7 +275,7 @@ Deno.serve(async (req) => {
     }
   };
 
-  let upstream: Response;
+  let upstream: { body: ReadableStream<Uint8Array> };
   try { upstream = await callGemini(system, contents); }
   catch (e) {
     console.error(e);
