@@ -54,6 +54,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .notice{position:relative;margin:4px 16px 0}
 .nrail{display:grid;grid-auto-flow:column;grid-auto-columns:100%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;border-radius:var(--r-md)}
 .nrail::-webkit-scrollbar{display:none}
+.ncard .nmore{margin-left:auto;align-self:center;color:var(--text3);font-size:22px;line-height:1}
+.ncard .nmore .ico{width:20px;height:20px}
+button.ncard{width:100%;font:inherit;color:inherit;cursor:pointer}
+.npost{color:var(--text2);font-size:15px;line-height:1.7;overflow-wrap:anywhere}
 .ncard{scroll-snap-align:start;display:flex;align-items:center;gap:14px;min-height:104px;padding:18px 20px;border-radius:var(--r-md);background:var(--bg2);border:1px solid var(--line);text-align:left}
 .ncard b{display:block;word-break:keep-all;font-family:var(--f-head);font-weight:800;font-size:18px;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}
 .ncard small{display:block;word-break:keep-all;margin-top:3px;color:var(--text3);font-size:12.5px}
@@ -1879,6 +1883,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 const $ = s => document.querySelector(s);
 const fmt = n => n >= 10000 ? (n / 10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '') + '만' : Number(n || 0).toLocaleString();
 const I = {
+  mega: '<svg class="ico" viewBox="0 0 24 24"><path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1zM17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/></svg>',
   heart: '<svg class="ico" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
   bubble: '<svg class="ico" viewBox="0 0 24 24"><path d="M12 4c4.7 0 8.5 3.2 8.5 7.2s-3.8 7.2-8.5 7.2c-.9 0-1.8-.1-2.6-.3L5 20l.9-3.6C4.4 15.1 3.5 13.2 3.5 11.2 3.5 7.2 7.3 4 12 4z"/></svg>',
   search: '<svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
@@ -2217,7 +2222,17 @@ function cardHTML(c, i) {
   </article>`;
 }
 const skelGrid = n => `<div class="grid">${Array.from({ length: n }, () => '<div class="card skel"><div class="art"></div><div class="info" style="margin-top:8px"><span class="sk"></span><span class="sk short"></span></div></div>').join('')}</div>`;
+const NOTICE_POST = `안녕하세요! 개발자 아가똥꼬입니다.
+
+현재 앱에서 사용 중인 AI 모델의 자체 정책 및 제한으로 인해 일부 대화가 의도와 다르게 제한될 수 있습니다. 특히 미성년자 캐릭터와의 일반적인 연애 대화나 감정 표현 등이 제한되는 경우가 있을 수 있으며, 이는 앱 제작자가 의도적으로 설정한 방향이라기보다는 사용 중인 AI 모델의 특성에 따른 부분입니다.
+
+또한 현재 앱은 베타 버전으로, 이용 중 예상치 못한 오류나 불편한 점이 발생할 수 있습니다. 보내 주시는 의견과 피드백은 앱을 개선하는 데 참고하겠습니다.
+
+앞으로 캐릭터 제작 및 대화 환경을 비롯해 다양한 부분을 꾸준히 개선해 나갈 예정입니다. 아직 부족한 점이 있더라도 너그럽게 지켜봐 주시면 감사하겠습니다.
+
+더욱 자유롭고 다양한 캐릭터와 이야기를 즐길 수 있는 환경을 만들기 위해 노력하겠습니다. 사랑합니다♡`;
 const NOTICES = [
+  ['📢 앱 이용 안내', 'from. @babydongo', 'mega', NOTICE_POST],
   ['Comma 오리지널 캐릭터 10명이 도착했어요', '하트를 눌러 찜하면 대화 탭에 모여요', 'spark'],
   ['미성년자 성적 콘텐츠는 금지예요', '만 18세 미만 캐릭터의 성적인 묘사·대화는 만들 수도, 나눌 수도 없어요', 'shield'],
   ['미성년자 캐릭터와는 연애 대화가 안 돼요', '고등학생 등 미성년 캐릭터와는 AI가 친구 관계로만 이어가요. 설레는 대화는 성인 캐릭터와 즐겨 주세요!', 'heart'],
@@ -2257,7 +2272,7 @@ function renderHome() {
   $('#view').innerHTML = `${S.offline ? '<div class="offline">서버에 연결하지 못해 기본 캐릭터를 미리보기로 보여 주고 있어요.</div>' : ''}
     ${S.searchOpen && !searching ? `<div class="sugg">${recents.length ? `<div class="suggh"><b>최근 검색</b><button class="mini" data-clearq>모두 지우기</button></div><div class="chips wrap">${recents.map(q => `<button class="chip sm" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>` : ''}
       ${tagPool.length ? `<div class="suggh"><b>태그로 찾기</b></div><div class="chips wrap">${tagPool.map(t => `<button class="chip sm" data-q="#${esc(t)}">#${esc(t)}</button>`).join('')}</div>` : ''}</div>` : ''}
-    ${searching || S.searchOpen ? '' : `<div class="notice"><div class="nrail" id="nrail">${NOTICES.map(([t, s, ic]) => `<div class="ncard"><span class="em">${I[ic]}</span><div><b>${t}</b><small>${s}</small></div></div>`).join('')}</div><span class="ncount" id="ncount">${S.notice + 1}/${NOTICES.length}</span></div>`}
+    ${searching || S.searchOpen ? '' : `<div class="notice"><div class="nrail" id="nrail">${NOTICES.map(([t, s, ic, post], i) => post ? `<button class="ncard" data-notice="${i}"><span class="em">${I[ic]}</span><div><b>${t}</b><small>${s}</small></div><span class="nmore">${I.chev || '›'}</span></button>` : `<div class="ncard"><span class="em">${I[ic]}</span><div><b>${t}</b><small>${s}</small></div></div>`).join('')}</div><span class="ncount" id="ncount">${S.notice + 1}/${NOTICES.length}</span></div>`}
     ${browse ? rowHTML('팔로잉', '내가 팔로우한 제작자의 캐릭터', followed) + rowHTML('새로 나온 캐릭터', '방금 등록된 따끈한 이야기', fresh, 'new') + rowHTML('지금 인기', '찜과 대화가 많은 캐릭터', hot, 'pop') : ''}
     <div class="sec"><div class="chips" role="tablist" aria-label="카테고리">${CATS.map(c => `<button class="chip ${S.cat === c ? 'on' : ''}" role="tab" aria-selected="${S.cat === c}" data-cat="${c}">${c}</button>`).join('')}</div></div>
     <div class="sec"><div class="rowh pad2"><div><h2>${searching ? `"${esc(S.q.trim())}" 검색 결과` : S.cat === '전체' ? '모든 캐릭터' : esc(S.cat)}</h2><p>${list.length}개</p></div>
@@ -2533,6 +2548,12 @@ document.addEventListener('click', e => {
   if (t.closest('[data-copylink]')) { closeSheet(); const u = location.href; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast('링크를 복사했어요'), () => toast(u)); return; }
   const au = t.closest('[data-auth]'); if (au) { openAuth(au.dataset.auth); return; }
   if (t.closest('[data-close]')) { if (t.closest('a[href]')) { closeSheet(); return; } closeSheet(); return; }
+  if ((m = t.closest('[data-notice]'))) {
+    const [title, sub, , post] = NOTICES[+m.dataset.notice];
+    document.body.classList.add('sheet-open');
+    $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet notice-sheet" role="dialog" aria-label="${esc(title)}"><div class="grab"></div><h2>${esc(title)}</h2><p class="sub">${esc(sub)}</p><div class="npost">${esc(post).replace(/\n/g, '<br>')}</div><button class="btn" data-close>확인</button></div>`;
+    return;
+  }
   const am = t.closest('[data-authmode]'); if (am) { const em = $('#a-email').value; AUTH.mode = am.dataset.authmode; AUTH.msg = ''; renderAuth({ email: em }); return; }
   if (t.closest('[data-resetpw]')) { resetPw(); return; }
   if (t.closest('[data-resetmine]')) { closeSheet(); sb.auth.resetPasswordForEmail(S.user.email, { redirectTo: redirectTo() + '#reset' }).then(({ error }) => toast(error ? authErr(error) : '비밀번호 재설정 메일을 보냈어요')); return; }
