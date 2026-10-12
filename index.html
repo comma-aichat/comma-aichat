@@ -2259,7 +2259,6 @@ function renderHome() {
   $('#view').innerHTML = `${S.offline ? '<div class="offline">서버에 연결하지 못해 기본 캐릭터를 미리보기로 보여 주고 있어요.</div>' : ''}
     ${S.searchOpen && !searching ? `<div class="sugg">${recents.length ? `<div class="suggh"><b>최근 검색</b><button class="mini" data-clearq>모두 지우기</button></div><div class="chips wrap">${recents.map(q => `<button class="chip sm" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>` : ''}
       ${tagPool.length ? `<div class="suggh"><b>태그로 찾기</b></div><div class="chips wrap">${tagPool.map(t => `<button class="chip sm" data-q="#${esc(t)}">#${esc(t)}</button>`).join('')}</div>` : ''}</div>` : ''}
-    ${searching || S.searchOpen ? '' : `<div class="notice"><div class="nrail" id="nrail">${NOTICES.map(([t, s, ic]) => `<div class="ncard"><span class="em">${I[ic]}</span><div><b>${t}</b><small>${s}</small></div></div>`).join('')}</div><span class="ncount" id="ncount">${S.notice + 1}/${NOTICES.length}</span></div>`}
     ${browse ? rowHTML('팔로잉', '내가 팔로우한 제작자의 캐릭터', followed) + rowHTML('새로 나온 캐릭터', '방금 등록된 따끈한 이야기', fresh, 'new') + rowHTML('지금 인기', '찜과 대화가 많은 캐릭터', hot, 'pop') : ''}
     <div class="sec"><div class="chips" role="tablist" aria-label="카테고리">${CATS.map(c => `<button class="chip ${S.cat === c ? 'on' : ''}" role="tab" aria-selected="${S.cat === c}" data-cat="${c}">${c}</button>`).join('')}</div></div>
     <div class="sec"><div class="rowh pad2"><div><h2>${searching ? `"${esc(S.q.trim())}" 검색 결과` : S.cat === '전체' ? '모든 캐릭터' : esc(S.cat)}</h2><p>${list.length}개</p></div>
