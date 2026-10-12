@@ -618,8 +618,7 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .chat .dl.user p{background:var(--bu-bg,rgba(255,79,154,.2));color:var(--bu-fg,var(--text))}
 .chat .dl.user p i{color:inherit;opacity:.75}
 .chat .dl.user p b{color:inherit}
-body.noav .chat .dl .dav{display:none}
-body.noav .chat .dl>div{max-width:100%}
+body.noav .chat .dl.user .dav{display:none}
 .cpop-scrim{position:fixed;inset:0;z-index:90}
 .cpop{position:fixed;z-index:91;top:calc(env(safe-area-inset-top,0px) + 58px);right:max(12px,calc((100vw - 720px)/2 + 12px));width:min(300px,calc(100vw - 24px));border-radius:18px;background:var(--card);border:1px solid var(--line2);box-shadow:0 18px 40px rgba(0,0,0,.5);overflow:hidden;animation:rise .18s var(--ease) both}
 .cpop .ci{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:0 18px;border-bottom:1px solid var(--line);font-size:15.5px;text-align:left}
@@ -2610,7 +2609,7 @@ document.addEventListener('click', e => {
   if (t.closest('[data-cpopclose]')) { closeSheet(); return; }
   if (t.closest('[data-swav]')) { S.chatSet.avatars = !S.chatSet.avatars; saveChatSet(); openChatSet(); return; }
   if (t.closest('[data-swhap]')) { S.chatSet.haptic = !S.chatSet.haptic; saveChatSet(); if (S.chatSet.haptic && navigator.vibrate) try { navigator.vibrate(18); } catch (e) { } openChatSet(); return; }
-  if (t.closest('[data-avhelp]')) { toast('끄면 대화방에서 캐릭터·내 프로필 사진을 숨겨요'); return; }
+  if (t.closest('[data-avhelp]')) { toast('끄면 대화방에서 내 대화 프로필(페르소나) 사진을 숨겨요'); return; }
   if (t.closest('[data-bubtheme]')) { openBubbleSheet(); return; }
   if ((m = t.closest('[data-bub]'))) { S.chatSet.theme = m.dataset.bub; saveChatSet(); openBubbleSheet(); return; }
   if ((m = t.closest('[data-chatedit]'))) { closeSheet(); S.chatEdit = m.dataset.chatedit !== 'done'; S.chatPick = new Set(); S.chatSearch = false; S.cq = ''; renderChats(); return; }
