@@ -612,6 +612,41 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .medit{display:grid;gap:8px;width:100%}
 .medit textarea{width:100%;padding:12px 14px;border-radius:14px;background:var(--card);border:1.5px solid var(--pink);color:var(--text);font:inherit;font-size:16px;outline:0;resize:vertical}
 .medit .macts{gap:12px}
+.chat .dl.char p{background:var(--bc-bg,var(--card2));color:var(--bc-fg,var(--text))}
+.chat .dl.char p i{color:var(--bc-soft,var(--text2))}
+.chat .dl.char p b{color:inherit}
+.chat .dl.user p{background:var(--bu-bg,rgba(255,79,154,.2));color:var(--bu-fg,var(--text))}
+.chat .dl.user p i{color:inherit;opacity:.75}
+.chat .dl.user p b{color:inherit}
+body.noav .chat .dl .dav{display:none}
+body.noav .chat .dl>div{max-width:100%}
+.cpop-scrim{position:fixed;inset:0;z-index:90}
+.cpop{position:fixed;z-index:91;top:calc(env(safe-area-inset-top,0px) + 58px);right:max(12px,calc((100vw - 720px)/2 + 12px));width:min(300px,calc(100vw - 24px));border-radius:18px;background:var(--card);border:1px solid var(--line2);box-shadow:0 18px 40px rgba(0,0,0,.5);overflow:hidden;animation:rise .18s var(--ease) both}
+.cpop .ci{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:0 18px;border-bottom:1px solid var(--line);font-size:15.5px;text-align:left}
+.cpop .ci:last-child{border-bottom:0}
+.cpop .ci .sp{flex:1}
+.cpop .gap{height:8px;background:var(--bg2)}
+.sw{position:relative;flex:none;width:50px;height:30px;border-radius:99px;background:var(--card2);transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.sw.on{background:var(--pink)}.sw.on::after{transform:translateX(20px)}
+.qtip{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--card2);color:var(--text2);font-size:12px;font-weight:700}
+.bgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.bopt{display:grid;gap:8px;justify-items:center;font-size:14px;color:var(--text3)}
+.bopt .bprev{position:relative;width:100%;aspect-ratio:1/1.05;border-radius:16px;background:var(--bg);border:2px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:8px;padding:8px;box-sizing:border-box}
+.bopt .bprev span{display:block;max-width:92%;padding:5px 8px;font-size:11.5px;letter-spacing:-.02em;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bopt .bprev .bc{border-radius:4px 14px 14px 14px;align-self:flex-start}
+.bopt .bprev .bu{border-radius:14px 4px 14px 14px;align-self:flex-end}
+.bopt.on .bprev{border-color:var(--pink)}
+.bopt.on{color:var(--pink2);font-weight:600}
+.bopt .bchk{position:absolute;top:7px;left:7px;width:22px;height:22px;border-radius:50%;background:var(--pink);color:#fff;display:grid;place-items:center}
+.bopt .bchk .ico{width:14px;height:14px;stroke-width:3}
+.crow.pick{width:100%;text-align:left;font:inherit;color:inherit;grid-template-columns:28px 56px minmax(0,1fr)}
+.crow .cbox{width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);display:grid;place-items:center;color:#fff}
+.crow.on .cbox{background:var(--pink);border-color:var(--pink)}
+.crow .cbox .ico{width:14px;height:14px;stroke-width:3}
+.cedit-bar{position:fixed;z-index:41;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));padding:12px 16px;background:rgba(16,15,19,.96);border-top:1px solid var(--line);display:flex;gap:10px;max-width:720px;margin:0 auto}
+.cedit-bar .btn{flex:1}
+.cedit-bar .btn.danger{background:#e5484d;box-shadow:none}
 .csort{display:flex;gap:4px;padding:14px 16px 6px}
 .csort button{height:32px;padding:0 14px;border-radius:99px;background:var(--card);color:var(--text3);font-size:13.5px;font-weight:600}
 .csort button.on{background:var(--card2);color:var(--text)}
@@ -1442,6 +1477,7 @@ async function sendChat(text, regen, editId) {
         if (ev.blocked) throw Object.assign(new Error('blocked'), { blocked: true });
         if (ev.error) throw new Error(ev.error);
         if (ev.done) {
+          if (S.chatSet.haptic && navigator.vibrate) try { navigator.vibrate(18); } catch (e) { }
           const content = C.streamText.trim();
           const ex = C.msgs.find(m => m.id === ev.assistant_id);
           if (ex) Object.assign(ex, { content, alts: ev.alts, alt_idx: ev.alt_idx });
@@ -1847,7 +1883,21 @@ const userFirst = (x, y) => (x.official ? 1 : 0) - (y.official ? 1 : 0);
 
 /* ============ state ============ */
 const store = { get(k, d) { try { const v = localStorage.getItem('comma.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('comma.' + k, JSON.stringify(v)); } catch (e) { } } };
-const S = { chatSort: store.get('chatSort', 'new'), sort: 'rec', followIds: null, convs: null, unread: 0, noti: null, cat: '전체', q: '', searchOpen: false, favs: new Set(store.get('favs', [])), loading: true, offline: false, user: null, profile: null, authReady: false, mine: null, mineTab: 'pub', notice: 0 };
+const BUBBLES = [
+  ['basic', '기본', '#26232b', '#f5f2f6', 'rgba(255,79,154,.2)', '#f5f2f6'],
+  ['comma', '콤마', '#26232b', '#f5f2f6', '#ff4f9a', '#ffffff'],
+  ['blossom', '벚꽃', '#2a1a22', '#ffe8f1', '#ffd1e3', '#3b1024'],
+  ['milk', '우유', '#ffffff', '#141317', '#3a3640', '#ffffff'],
+  ['lavender', '라벤더', '#ffffff', '#141317', '#ddd4ff', '#24184f'],
+  ['mint', '민트', '#1f2a27', '#e9fff7', '#7ee0c3', '#0d2a22'],
+  ['sky', '하늘', '#1d2533', '#eaf2ff', '#4f8dff', '#ffffff'],
+  ['lemon', '레몬', '#2b2a1f', '#fffbe6', '#ffe066', '#2b2300'],
+  ['wine', '와인', '#2d1418', '#ffe9ec', '#b3263f', '#ffffff'],
+];
+function applyChatSet() { const t = BUBBLES.find(b => b[0] === S.chatSet.theme) || BUBBLES[0]; const st = document.body.style; if (t[0] === 'basic') { ['--bc-bg', '--bc-fg', '--bc-soft', '--bu-bg', '--bu-fg'].forEach(k => st.removeProperty(k)); } else { st.setProperty('--bc-bg', t[2]); st.setProperty('--bc-fg', t[3]); st.setProperty('--bc-soft', t[3] === '#141317' ? '#6b6470' : 'color-mix(in srgb, ' + t[3] + ' 62%, transparent)'); st.setProperty('--bu-bg', t[4]); st.setProperty('--bu-fg', t[5]); } document.body.classList.toggle('noav', !S.chatSet.avatars); }
+const saveChatSet = () => { store.set('chatSet', S.chatSet); applyChatSet(); };
+const S = { chatSet: Object.assign({ theme: 'basic', avatars: true, haptic: true }, store.get('chatSet', {})), chatEdit: false, chatPick: new Set(), chatSort: store.get('chatSort', 'new'), sort: 'rec', followIds: null, convs: null, unread: 0, noti: null, cat: '전체', q: '', searchOpen: false, favs: new Set(store.get('favs', [])), loading: true, offline: false, user: null, profile: null, authReady: false, mine: null, mineTab: 'pub', notice: 0 };
+applyChatSet();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const $ = s => document.querySelector(s);
 const fmt = n => n >= 10000 ? (n / 10000).toFixed(n >= 100000 ? 0 : 1).replace(/\.0$/, '') + '만' : Number(n || 0).toLocaleString();
@@ -1863,6 +1913,7 @@ const I = {
   img: '<svg class="ico" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 4 4 3-3 4 4"/></svg>',
   home: '<svg class="ico" viewBox="0 0 24 24"><path d="M3.5 10.2 12 3.5l8.5 6.7V20a.8.8 0 0 1-.8.8H15v-6h-6v6H4.3a.8.8 0 0 1-.8-.8z"/></svg>',
   back: '<svg class="ico" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>',
+  check: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   close: '<svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   pen: '<svg class="ico" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
   chart: '<svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 15v-3M12 15V9M15 15v-5"/></svg>',
@@ -2284,8 +2335,29 @@ function renderCreate() {
       : `<div class="empty" style="margin-top:10px"><b>${S.mineTab === 'draft' ? '임시저장한 캐릭터가 없어요' : S.mineTab === 'priv' ? '비공개 캐릭터가 없어요' : '아직 공개한 캐릭터가 없어요'}</b>오른쪽 아래 + 버튼으로 캐릭터를 만들어 보세요.</div>`}
     <a class="fab" href="#new" aria-label="캐릭터 만들기">${I.plus}</a>`;
 }
+async function leaveChats() {
+  const ids = [...S.chatPick]; closeSheet();
+  const { error } = await sb.from('conversations').delete().eq('user_id', S.user.id).in('character_id', ids);
+  if (error) { toast('나가지 못했어요'); return; }
+  toast(`대화방 ${ids.length}개에서 나갔어요`); S.chatEdit = false; S.chatPick = new Set(); await loadConvs(); renderChats();
+}
+function openChatSet() {
+  document.body.classList.add('sheet-open');
+  const cs = S.chatSet, th = (BUBBLES.find(b => b[0] === cs.theme) || BUBBLES[0])[1];
+  $('#sheet').innerHTML = `<div class="cpop-scrim" data-cpopclose></div><div class="cpop" role="dialog" aria-label="대화 설정">
+    <button class="ci" data-bubtheme>말풍선 테마<span class="sp"></span><span style="color:var(--text3);font-size:14px">${th}</span></button>
+    <div class="ci">대화 프로필 표시 <button class="qtip" data-avhelp aria-label="설명">?</button><span class="sp"></span><button class="sw ${cs.avatars ? 'on' : ''}" role="switch" aria-checked="${cs.avatars}" aria-label="대화 프로필 표시" data-swav></button></div>
+    <div class="ci">답변 완료 햅틱<span class="sp"></span><button class="sw ${cs.haptic ? 'on' : ''}" role="switch" aria-checked="${cs.haptic}" aria-label="답변 완료 햅틱" data-swhap></button></div>
+    <div class="gap"></div>
+    <button class="ci" data-chatedit="start">대화방 편집</button></div>`;
+}
+function openBubbleSheet() {
+  document.body.classList.add('sheet-open');
+  $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-label="말풍선 테마"><div class="grab"></div><h2 style="text-align:center">말풍선 테마</h2>
+    <div class="bgrid">${BUBBLES.map(([k, nm, cb, cf, ub, uf]) => `<button class="bopt ${S.chatSet.theme === k ? 'on' : ''}" data-bub="${k}" aria-pressed="${S.chatSet.theme === k}"><span class="bprev">${S.chatSet.theme === k ? `<i class="bchk">${I.check}</i>` : ''}<span class="bc" style="background:${cb};color:${cf}">안녕하세요</span><span class="bu" style="background:${ub};color:${uf}">안녕하세요</span></span>${nm}</button>`).join('')}</div></div>`;
+}
 function renderChats() {
-  $('#top').innerHTML = `<header class="top"><h1>대화</h1><span class="sp"></span>${S.user ? `<button class="iconbtn" data-chatsearch aria-label="대화 검색">${I.search}</button>` : ''}</header>${S.chatSearch ? `<label class="searchbar" for="cq">${I.search}<input id="cq" type="search" placeholder="캐릭터 이름이나 대화 내용" value="${esc(S.cq || '')}" autocomplete="off"></label>` : ''}`;
+  $('#top').innerHTML = `<header class="top">${S.chatEdit ? `<h1>대화방 편집</h1><span class="sp"></span><button class="edbtn" data-chatedit="done">완료</button>` : `<h1>대화</h1><span class="sp"></span>${S.user ? `<button class="iconbtn" data-chatsearch aria-label="대화 검색">${I.search}</button><button class="iconbtn" data-chatset aria-label="대화 설정">${I.gear}</button>` : ''}`}</header>${S.chatSearch ? `<label class="searchbar" for="cq">${I.search}<input id="cq" type="search" placeholder="캐릭터 이름이나 대화 내용" value="${esc(S.cq || '')}" autocomplete="off"></label>` : ''}`;
   const favs = CHARS.filter(c => S.favs.has(c.id));
   const shelf = `<div class="shelf-h">${I.heart}찜한 캐릭터<small>${favs.length}명</small></div>
     ${favs.length ? `<div class="shelf">${favs.map(c => `<a href="#c-${c.id}"><span class="sq">${pic(c, 's')}</span><span>${esc(c.name)}</span></a>`).join('')}</div>` : '<div class="shelf-empty">캐릭터 카드의 ♡를 누르면 여기에 모여요</div>'}
@@ -2300,7 +2372,7 @@ function renderChats() {
   const old = S.chatSort === 'old';
   const list = [...latest.values()].filter(v => !q || v.c.name.toLowerCase().includes(q) || (v.last_message || '').toLowerCase().includes(q))
     .sort((a, b) => old ? String(a.updated_at).localeCompare(String(b.updated_at)) : String(b.updated_at).localeCompare(String(a.updated_at)));
-  $('#view').innerHTML = shelf + `<div class="csort" role="tablist" aria-label="정렬"><button class="${old ? '' : 'on'}" data-chatsort="new" aria-selected="${!old}">최신순</button><button class="${old ? 'on' : ''}" data-chatsort="old" aria-selected="${old}">오래된순</button></div>` + (list.length ? `<div class="clist">${list.map(v => `<a class="crow" href="#chat-${v.id}"><span class="thumb">${pic(v.c, 'cl')}</span><span class="rtx"><b>${esc(v.c.name)}</b><span>${esc((v.last_message || '').replace(/\*/g, '')) || '대화를 시작해 보세요'}</span></span><small>${ago(v.updated_at)}</small></a>`).join('')}</div>`
+  $('#view').innerHTML = shelf + `<div class="csort" role="tablist" aria-label="정렬"><button class="${old ? '' : 'on'}" data-chatsort="new" aria-selected="${!old}">최신순</button><button class="${old ? 'on' : ''}" data-chatsort="old" aria-selected="${old}">오래된순</button></div>` + (list.length ? `<div class="clist">${S.chatEdit ? list.map(v => `<button class="crow pick ${S.chatPick.has(v.character_id) ? 'on' : ''}" data-cpick="${esc(v.character_id)}" aria-pressed="${S.chatPick.has(v.character_id)}"><span class="cbox">${S.chatPick.has(v.character_id) ? I.check : ''}</span><span class="thumb">${pic(v.c, 'cl')}</span><span class="rtx"><b>${esc(v.c.name)}</b><span>${esc((v.last_message || '').replace(/\*/g, '')) || '대화를 시작해 보세요'}</span></span></button>`).join('') + `<div style="height:84px"></div><div class="cedit-bar"><button class="btn sec2" data-chatedit="done">취소</button><button class="btn danger" data-cleave ${S.chatPick.size ? '' : 'aria-disabled="true"'}>나가기${S.chatPick.size ? ' ' + S.chatPick.size : ''}</button></div>` : list.map(v => `<a class="crow" href="#chat-${v.id}"><span class="thumb">${pic(v.c, 'cl')}</span><span class="rtx"><b>${esc(v.c.name)}</b><span>${esc((v.last_message || '').replace(/\*/g, '')) || '대화를 시작해 보세요'}</span></span><small>${ago(v.updated_at)}</small></a>`).join('')}</div>`
     : `<div class="empty" style="margin-top:6px"><b>${q ? '찾는 대화가 없어요' : '아직 나눈 대화가 없어요'}</b>${q ? '' : '마음에 드는 캐릭터의 상세 화면에서 대화를 시작해 보세요.'}<a class="lnk" href="#home">캐릭터 둘러보기</a></div>`);
   const cq = $('#cq'); if (cq) cq.addEventListener('input', e => { S.cq = e.target.value; const pos = cq.selectionStart; renderChats(); const n = $('#cq'); n.focus(); n.setSelectionRange(pos, pos); });
 }
@@ -2534,6 +2606,22 @@ document.addEventListener('click', e => {
   const rm = t.closest('[data-rm]'); if (rm) { removeImage(rm.dataset.rm); return; }
   const c = t.closest('[data-cat]'); if (c) { S.cat = c.dataset.cat; renderBase(lastBase); return; }
   const mt = t.closest('[data-minetab]'); if (mt) { S.mineTab = mt.dataset.minetab; renderCreate(); return; }
+  if (t.closest('[data-chatset]')) { openChatSet(); return; }
+  if (t.closest('[data-cpopclose]')) { closeSheet(); return; }
+  if (t.closest('[data-swav]')) { S.chatSet.avatars = !S.chatSet.avatars; saveChatSet(); openChatSet(); return; }
+  if (t.closest('[data-swhap]')) { S.chatSet.haptic = !S.chatSet.haptic; saveChatSet(); if (S.chatSet.haptic && navigator.vibrate) try { navigator.vibrate(18); } catch (e) { } openChatSet(); return; }
+  if (t.closest('[data-avhelp]')) { toast('끄면 대화방에서 캐릭터·내 프로필 사진을 숨겨요'); return; }
+  if (t.closest('[data-bubtheme]')) { openBubbleSheet(); return; }
+  if ((m = t.closest('[data-bub]'))) { S.chatSet.theme = m.dataset.bub; saveChatSet(); openBubbleSheet(); return; }
+  if ((m = t.closest('[data-chatedit]'))) { closeSheet(); S.chatEdit = m.dataset.chatedit !== 'done'; S.chatPick = new Set(); S.chatSearch = false; S.cq = ''; renderChats(); return; }
+  if ((m = t.closest('[data-cpick]'))) { const k = m.dataset.cpick; S.chatPick.has(k) ? S.chatPick.delete(k) : S.chatPick.add(k); renderChats(); return; }
+  if (t.closest('[data-cleave]')) {
+    if (!S.chatPick.size) { toast('나갈 대화방을 골라 주세요'); return; }
+    document.body.classList.add('sheet-open');
+    $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-label="나가기 확인"><div class="grab"></div><h2>대화방 ${S.chatPick.size}개에서 나갈까요?</h2><p class="sub">고른 캐릭터와 나눈 대화가 모두 지워지고, 되돌릴 수 없어요.</p><button class="btn" data-cleaveok style="background:#e5484d;box-shadow:none">나가기</button><button class="linkbtn" data-close>취소</button></div>`;
+    return;
+  }
+  if (t.closest('[data-cleaveok]')) { leaveChats(); return; }
   if ((m = t.closest('[data-chatsort]'))) { S.chatSort = m.dataset.chatsort; store.set('chatSort', S.chatSort); renderChats(); return; }
   if (t.closest('[data-chatsearch]')) { S.chatSearch = !S.chatSearch; if (!S.chatSearch) S.cq = ''; renderChats(); const q = $('#cq'); if (q) q.focus(); return; }
   if ((m = t.closest('[data-sort]'))) { S.sort = m.dataset.sort; renderHome(); if (m.classList.contains('lnk')) { const g = document.querySelector('.sortsel'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'center' }); } return; }
