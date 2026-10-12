@@ -125,6 +125,51 @@ button.ncard{width:100%;font:inherit;color:inherit;cursor:pointer}
 .fab:active{transform:scale(.94)}
 .fab .ico{width:28px;height:28px}
 
+/* character stats */
+.st-hero{display:flex;align-items:center;gap:16px;padding:10px 16px 22px;border-bottom:1px solid var(--line)}
+.st-hero .thumb{width:72px;height:96px;border-radius:14px;overflow:hidden;flex:none;background:var(--card)}
+.st-hero .thumb img,.st-hero .thumb>*{width:100%;height:100%;object-fit:cover}
+.st-hero .tx{flex:1;min-width:0}
+.st-hero b{display:block;font-family:var(--f-head);font-weight:800;font-size:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-hero small{color:var(--text3);font-size:13px}
+.st-hero .edbtn2{flex:none;height:40px;padding:0 16px;border-radius:12px;background:var(--card2);font-weight:600;font-size:14px;display:grid;place-items:center}
+.st-per{display:flex;gap:8px;padding:18px 16px 0}
+.st-sum{display:flex;align-items:baseline;justify-content:space-between;padding:22px 16px 0}
+.st-sum span{color:var(--text2);font-size:15px}
+.st-sum small{color:var(--text3);font-size:13.5px}
+.st-total{padding:2px 16px 0;font-family:var(--f-logo);font-weight:800;font-size:44px;line-height:1.15;font-variant-numeric:tabular-nums}
+.st-chart{position:relative;margin:22px 16px 0 52px;height:220px}
+.st-grid{position:absolute;left:0;right:0;border-top:1px solid var(--line2)}
+.st-grid i{position:absolute;right:calc(100% + 12px);top:-10px;font-style:normal;font-size:12.5px;color:var(--text3);font-variant-numeric:tabular-nums}
+.st-bars{position:absolute;inset:0;display:flex;align-items:flex-end;gap:var(--gap,10px)}
+.st-bar{flex:1;position:relative;height:100%;display:flex;align-items:flex-end}
+.st-bar span{display:block;width:100%;min-height:0;border-radius:7px 7px 2px 2px;background:linear-gradient(180deg,var(--pink2),var(--pink));box-shadow:0 6px 18px var(--glow);transform-origin:bottom;animation:grow .6s var(--ease) both}
+.st-bar.zero span{display:none}
+.st-bar em{position:absolute;left:50%;bottom:calc(var(--h) + 6px);transform:translateX(-50%);font-style:normal;font-size:11.5px;color:var(--text2);opacity:0;transition:opacity .2s;font-variant-numeric:tabular-nums}
+.st-bar:hover em,.st-bar:focus em{opacity:1}
+@keyframes grow{from{transform:scaleY(0)}to{transform:none}}
+.st-x{display:flex;gap:var(--gap,10px);margin:10px 16px 0 52px}
+.st-x span{flex:1;text-align:center;font-size:12.5px;color:var(--text3);white-space:nowrap;overflow:visible;font-variant-numeric:tabular-nums}
+.st-h{padding:44px 16px 0}
+.st-h h3{margin:0;font-family:var(--f-head);font-weight:800;font-size:21px;line-height:1.4;letter-spacing:-.01em}
+.st-h p{margin:8px 0 0;color:var(--text3);font-size:13.5px}
+.st-cards{display:grid;gap:12px;padding:18px 16px 30px}
+.st-card{display:block;width:100%;text-align:left;padding:20px 20px;border-radius:var(--r-lg);background:var(--card);border:1px solid var(--line)}
+.st-card .row{display:flex;align-items:center;gap:10px}
+.st-card .lb{color:var(--text2);font-size:14.5px}
+.st-card .v{display:flex;align-items:center;gap:10px;margin-top:6px}
+.st-card .v b{font-family:var(--f-logo);font-weight:800;font-size:32px;line-height:1.1;font-variant-numeric:tabular-nums}
+.st-card .stchev{margin-left:auto;color:var(--text3);transition:transform .25s var(--ease)}
+.st-card.open .stchev{transform:rotate(90deg)}
+.st-card .more{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);color:var(--text2);font-size:13.5px;line-height:1.6}
+.st-card.open .more{display:block}
+.st-card .more b{color:var(--text)}
+.gr{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap}
+.gr.best{background:var(--pink);color:#fff;box-shadow:0 4px 14px var(--glow)}
+.gr.ok{background:var(--card2);color:var(--text2)}
+.gr.low{background:rgba(255,179,191,.12);color:#ffb3bf}
+.st-note{margin:0 16px;padding:12px 14px;border-radius:var(--r-sm);background:var(--bg2);color:var(--text3);font-size:12.5px;line-height:1.6}
+
 /* chats tab */
 .shelf-h{display:flex;align-items:center;gap:6px;padding:10px 16px 12px;font-family:var(--f-head);font-weight:700;font-size:16px}
 .shelf-h .ico{width:18px;height:18px;color:var(--pink);fill:var(--pink)}
@@ -1618,9 +1663,9 @@ function openDrawer(page) {
     const p = C.conv.persona;
     body = `<div class="drbody">
       <button class="dri" data-newchat><b>새로 하기</b><small>처음 장면부터 다시 시작해요</small></button>
-      <button class="dri" data-drpage="resume"><b>이어 하기</b>${I.down.replace('class="ico"', 'class="ico chev"')}</button>
+      <button class="dri" data-drpage="resume"><b>이어 하기</b>${I.down.replace('class="ico"', 'class="ico stchev"')}</button>
       <button class="dri" data-selstart><b>대화 삭제</b><small>지울 메시지를 골라서 삭제해요</small></button>
-      <button class="dri" data-drpage="persona"><b>대화 프로필</b><span class="drv">${esc((p && p.name) || '없음')}</span>${I.down.replace('class="ico"', 'class="ico chev"')}</button>
+      <button class="dri" data-drpage="persona"><b>대화 프로필</b><span class="drv">${esc((p && p.name) || '없음')}</span>${I.down.replace('class="ico"', 'class="ico stchev"')}</button>
     </div>
     <button class="drexit" data-leavechat>${I.out}대화방 나가기</button>`;
   } else if (DR.page === 'resume') {
@@ -1966,7 +2011,7 @@ const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY, { auth
 const onNetlify = /netlify\.app$/.test(location.hostname);
 const fromRow = r => ({ id: r.slug || r.id, dbId: r.id, name: r.name, en: (r.art && r.art.en) || '', cat: r.category || '일상', tags: r.tags || [], tl: r.tagline || '', intro: r.intro || '', pers: r.personality || '', talk: r.speech || '', world: r.world || '', greet: r.greeting || '',
   art: r.art || autoArt(r.id), img: r.image_url, basics: r.basics || null, images: r.images || [], plot: r.plot && r.plot.v ? r.plot : null, status: r.status || 'published',
-  gender: (r.plot && r.plot.gender) || (r.art && r.art.gender) || '', official: r.is_official, isPublic: r.is_public, owner: r.owner_id, allowComments: r.allow_comments !== false, stats: { chats: r.chat_count || 0, msgs: r.message_count || 0, favs: r.favorite_count || 0, comments: r.comment_count || 0 } });
+  gender: (r.plot && r.plot.gender) || (r.art && r.art.gender) || '', official: r.is_official, isPublic: r.is_public, owner: r.owner_id, created: r.created_at || null, allowComments: r.allow_comments !== false, stats: { chats: r.chat_count || 0, msgs: r.message_count || 0, favs: r.favorite_count || 0, comments: r.comment_count || 0 } });
 const CHAR_COLS = 'id,slug,basics,owner_id,name,tagline,intro,personality,speech,world,greeting,category,tags,art,image_url,images,plot,status,allow_comments,is_public,is_official,chat_count,message_count,favorite_count,comment_count,created_at';
 async function loadCharacters() {
   if (!sb) throw new Error('no client');
@@ -2334,7 +2379,7 @@ function matches(c) {
 }
 function cardHTML(c, i) {
   const on = S.favs.has(c.id);
-  return `<article class="card" style="animation-delay:${Math.min(i, 10) * 35}ms">
+  return `<article class="card" ${c.dbId ? `data-cid="${c.dbId}"` : ''} style="animation-delay:${Math.min(i, 10) * 35}ms">
     <a href="#c-${c.id}" class="art" aria-label="${esc(c.name)} 상세 보기">${pic(c, 'g')}</a>
     <span class="cnt">${I.bubble}${c.stats ? fmt(c.stats.msgs) : '0'}</span>
     ${c.official ? '<span class="ori" title="Comma 오리지널">C</span>' : ''}
@@ -2416,13 +2461,101 @@ function renderRank() {
   $('#top').innerHTML = headerHome(true);
   if (S.loading) { $('#view').innerHTML = `<div class="sec">${skelGrid(4)}</div>`; return; }
   const list = CHARS.filter(matches).slice().sort((a, b) => ((b.stats ? b.stats.favs * 3 + b.stats.msgs : 0) - (a.stats ? a.stats.favs * 3 + a.stats.msgs : 0)) || a.name.localeCompare(b.name));
-  $('#view').innerHTML = `<div class="sec" style="margin-top:6px"><p class="pad" style="margin:0 0 6px;color:var(--text3);font-size:13px">찜과 대화량으로 매긴 순위예요</p><div class="rank">${list.map((c, i) => `<a class="rrow" href="#c-${c.id}"><span class="rno">${i + 1}</span><span class="thumb">${pic(c, 'r')}</span><span class="rtx"><b>${esc(c.name)}</b><span>${inlineMd(c.tl, { char: c.name })}</span></span><span class="rmeta"><i>♥ ${fmt(c.stats ? c.stats.favs : 0)}</i>대화 ${fmt(c.stats ? c.stats.msgs : 0)}</span></a>`).join('')}</div></div>`;
+  $('#view').innerHTML = `<div class="sec" style="margin-top:6px"><p class="pad" style="margin:0 0 6px;color:var(--text3);font-size:13px">찜과 대화량으로 매긴 순위예요</p><div class="rank">${list.map((c, i) => `<a class="rrow" href="#c-${c.id}" ${c.dbId ? `data-cid="${c.dbId}"` : ''}><span class="rno">${i + 1}</span><span class="thumb">${pic(c, 'r')}</span><span class="rtx"><b>${esc(c.name)}</b><span>${inlineMd(c.tl, { char: c.name })}</span></span><span class="rmeta"><i>♥ ${fmt(c.stats ? c.stats.favs : 0)}</i>대화 ${fmt(c.stats ? c.stats.msgs : 0)}</span></a>`).join('')}</div></div>`;
   bindHome();
 }
 function needLogin(title, text) {
   return `<div class="guest"><div class="orb">${I.user.replace('class="ico"', 'class="ico" style="width:30px;height:30px"')}</div><h2>${title}</h2><p>${text}</p>
     <div class="row2" style="max-width:340px"><button class="btn" data-auth="signup">회원가입</button><button class="btn sec2" data-auth="login">로그인</button></div></div>`;
 }
+/* ============ character stats (만들기 → 통계) ============ */
+const ST = { id: null, days: 7, data: null, err: false, open: -1, seq: 0 };
+const stChar = () => (S.mine || []).find(x => x.id === ST.id || x.dbId === ST.id);
+function openStats(id) {
+  if (ST.id !== id) { ST.id = id; ST.data = null; ST.err = false; ST.loading = false; ST.seq++; ST.open = -1; ST.days = 7; }
+  paintStats();
+}
+async function loadStats() {
+  const c = stChar(); if (!c || !sb) return;
+  const my = ++ST.seq; ST.err = false; ST.data = null; ST.loading = true; paintStats();
+  const { data, error } = await sb.rpc('character_stats', { cid: c.dbId, days: ST.days });
+  if (my !== ST.seq) return;
+  ST.loading = false;
+  if (error) ST.err = true; else ST.data = data;
+  if (curHash() === 'st-' + ST.id) paintStats();
+}
+const ymd = s => { const [y, m, d] = String(s).slice(0, 10).split('-'); return { y, m: +m, d: +d }; };
+const pct = (a, b) => b > 0 ? Math.min(100, a / b * 100) : null;
+const grade = (v, hi, lo) => v == null ? null : v >= hi ? 'best' : v >= lo ? 'ok' : 'low';
+const GR = { best: '최고예요', ok: '보통이에요', low: '아쉬워요' };
+function stMetrics(d) {
+  const k = ST.days / 7;
+  const ctr = pct(d.clicks, d.views), conv = pct(d.convs, d.clicks), ten = pct(d.convs10, d.convs);
+  const f1 = v => v == null ? '-' : v.toFixed(1) + '%';
+  return [
+    { lb: '노출된 유저', v: d.views.toLocaleString() + '명', g: d.views ? grade(d.views, 500 * k, 80 * k) : 'low',
+      more: `홈·랭킹·검색에서 캐릭터 카드를 본 사람 수예요. 한 사람은 하루에 한 번만 세요.<br><b>올리려면</b> 첫눈에 들어오는 대표 이미지와 한 줄 소개, 사람들이 많이 찾는 태그를 달아 보세요.` },
+    { lb: '노출 대비 클릭률', v: f1(ctr), g: grade(ctr, 8, 3),
+      more: `카드를 본 사람 중 눌러서 상세 화면을 연 비율이에요 (${d.clicks.toLocaleString()}명 / ${d.views.toLocaleString()}명).<br><b>올리려면</b> 이미지와 한 줄 소개가 궁금증을 남기게 다듬어 보세요.` },
+    { lb: '대화 전환율', v: f1(conv), g: grade(conv, 15, 5),
+      more: `상세 화면을 연 사람 중 실제로 대화를 시작한 비율이에요 (${d.convs.toLocaleString()}개 / ${d.clicks.toLocaleString()}명).<br><b>올리려면</b> 소개글에 어떤 이야기를 나눌 수 있는지 분명히 보여 주세요.` },
+    { lb: '대화 10분 전환율', v: f1(ten), g: grade(ten, 60, 30),
+      more: `시작된 대화 중 10분 넘게 이어진 비율이에요 (${d.convs10.toLocaleString()}개 / ${d.convs.toLocaleString()}개).<br><b>올리려면</b> 첫 메시지에서 바로 반응하고 싶어지는 상황을 던져 보세요.` },
+  ];
+}
+function stChart(d) {
+  const rows = d.daily || [], max = Math.max(0, ...rows.map(r => r.n));
+  const top = max <= 0 ? 4 : max, mid = Math.round(top / 2), n = rows.length;
+  const every = n <= 7 ? (n > 5 ? 2 : 1) : n <= 14 ? 3 : 7, gap = n <= 7 ? 12 : n <= 14 ? 6 : 3;
+  const lbl = (r, i) => { const { m, d: dd } = ymd(r.day); return (n - 1 - i) % every === 0 ? `${m}/${dd}` : ''; };
+  return `<div class="st-chart" style="--gap:${gap}px" role="img" aria-label="날짜별 대화량 막대그래프, 최고 ${max}">
+      ${[top, mid, 0].map(v => `<div class="st-grid" style="top:${(1 - v / top) * 100}%"><i>${v}</i></div>`).join('')}
+      <div class="st-bars">${rows.map((r, i) => { const h = (r.n / top * 100).toFixed(1) + '%'; return `<div class="st-bar ${r.n ? '' : 'zero'}" tabindex="0" style="--h:${h}"><em>${r.n}</em><span style="height:${h};animation-delay:${i * 30}ms"></span></div>`; }).join('')}</div>
+    </div>
+    <div class="st-x" style="--gap:${gap}px">${rows.map((r, i) => `<span>${lbl(r, i)}</span>`).join('')}</div>`;
+}
+function paintStats() {
+  const c = stChar();
+  $('#top').innerHTML = `<header class="top"><a class="iconbtn" href="#create" aria-label="뒤로">${I.back}</a><h1 style="font-size:19px">${c ? esc(c.name) : '통계'}</h1></header>`;
+  if (!S.authReady || (S.user && S.mine === null)) { $('#view').innerHTML = skelGrid(1); return; }
+  if (!S.user) { $('#view').innerHTML = needLogin('캐릭터 통계', '로그인하면 내 캐릭터의 통계를 볼 수 있어요.'); return; }
+  if (!c) { $('#view').innerHTML = `<div class="empty" style="margin-top:24px"><b>캐릭터를 찾을 수 없어요</b>만들기 탭에서 다시 열어 주세요.</div>`; return; }
+  if (!ST.data && !ST.err && !ST.loading) { loadStats(); return; }
+  const dt = v => { if (!v) return ''; const { y, m, d } = ymd(v); return `${y.slice(2)}.${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}`; };
+  const hero = `<div class="st-hero"><span class="thumb">${pic(c, 'st')}</span><span class="tx"><b>${esc(c.name)}</b><small>${c.created ? '출시일 ' + dt(c.created) : ''}</small></span><a class="edbtn2" href="#ed-${c.dbId}">수정</a></div>
+    <div class="st-per">${[[7, '최근 7일'], [30, '최근 30일']].map(([v, l]) => `<button class="chip sm ${ST.days === v ? 'on' : ''}" data-stdays="${v}">${l}</button>`).join('')}</div>`;
+  const d = ST.data;
+  if (ST.err) { $('#view').innerHTML = hero + `<div class="empty" style="margin-top:24px"><b>통계를 불러오지 못했어요</b><button class="chip sm" data-stdays="${ST.days}" style="margin-top:10px">다시 시도</button></div>`; return; }
+  if (!d) { $('#view').innerHTML = hero + skelGrid(1); return; }
+  const s = ymd(d.start), e = ymd(d.end), total = (d.daily || []).reduce((a, r) => a + r.n, 0);
+  $('#view').innerHTML = hero + `
+    <div class="st-sum"><span>대화량</span><small>${s.m}월 ${s.d}일 - ${e.m}월 ${e.d}일</small></div>
+    <div class="st-total">${total.toLocaleString()}</div>
+    ${stChart(d)}
+    <div class="st-h"><h3>대화량을 올리고 싶다면<br>네 가지 지표를 확인해 보세요</h3><p>카드를 눌러 지표의 뜻과 올리는 방법을 볼 수 있어요</p></div>
+    <div class="st-cards">${stMetrics(d).map((x, i) => `<button class="st-card ${ST.open === i ? 'open' : ''}" data-stopen="${i}" aria-expanded="${ST.open === i}">
+      <span class="row"><span class="lb">${x.lb}</span><svg class="ico stchev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      <span class="v"><b>${x.v}</b>${x.g ? `<span class="gr ${x.g}">${GR[x.g]}</span>` : ''}</span>
+      <span class="more">${x.more}</span></button>`).join('')}</div>
+    <p class="st-note">내가 직접 나눈 대화와 내 캐릭터 노출은 통계에서 빠져요. 노출·클릭은 이번 업데이트부터 쌓여요.</p>`;
+}
+/* impression / click logging (one per visitor per day, counted on the server) */
+const VID = (() => { const mk = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36)); try { let v = localStorage.getItem('comma.vid'); if (!v) { v = mk(); localStorage.setItem('comma.vid', v); } return v; } catch { return window.__vid || (window.__vid = mk()); } })();
+const EV = { view: new Set(), click: new Set(), q: { view: new Set(), click: new Set() }, t: null };
+function logEv(kind, ids) {
+  if (!sb) return;
+  ids.forEach(id => { if (id && !EV[kind].has(id)) { EV[kind].add(id); EV.q[kind].add(id); } });
+  clearTimeout(EV.t); EV.t = setTimeout(flushEv, 1200);
+}
+function flushEv() { for (const k of ['view', 'click']) { const ids = [...EV.q[k]]; EV.q[k].clear(); for (let i = 0; i < ids.length; i += 60) sb.rpc('log_char_events', { ids: ids.slice(i, i + 60), k, v: VID }).then(() => {}, () => {}); } }
+addEventListener('pagehide', flushEv);
+(() => {
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(es => { const ids = []; es.forEach(e => { if (e.isIntersecting) { ids.push(e.target.dataset.cid); io.unobserve(e.target); } }); if (ids.length) logEv('view', ids); }, { threshold: .5 });
+  let pend = false;
+  const scan = () => { pend = false; document.querySelectorAll('#view [data-cid]:not([data-seen])').forEach(n => { n.dataset.seen = '1'; io.observe(n); }); };
+  new MutationObserver(() => { if (!pend) { pend = true; requestAnimationFrame(scan); } }).observe(document.getElementById('view'), { childList: true, subtree: true });
+})();
 function renderCreate() {
   $('#top').innerHTML = `<header class="top"><h1>만들기</h1></header>`;
   if (!S.authReady) { $('#view').innerHTML = skelGrid(2); return; }
@@ -2548,6 +2681,7 @@ function renderDetail(id) {
   const y = box.querySelector('#detailScroll') ? box.querySelector('#detailScroll').scrollTop : 0;
   const same = window.__detailC && window.__detailC.dbId === c.dbId;
   window.__detailC = c;
+  if (c.dbId && !same) logEv('click', [c.dbId]);
   box.innerHTML = detailHTML(c, false); bindDetail();
   if (same) box.querySelector('#detailScroll').scrollTop = y;
   if (c.owner) fillByline(c.owner);
@@ -2660,6 +2794,7 @@ function route() {
   if (E.data) { E.data = null; }
   document.body.classList.remove('editing');
   const isDetail = h.startsWith('c-');
+  if (h.startsWith('st-')) { $('#detail').innerHTML = ''; document.body.style.overflow = ''; document.querySelectorAll('[data-nav]').forEach(a => a.classList.toggle('on', a.dataset.nav === 'create')); window.scrollTo(0, 0); lastBase = 'create'; openStats(h.slice(3)); return; }
   if (h.startsWith('u-')) { $('#detail').innerHTML = ''; document.body.style.overflow = ''; document.querySelectorAll('[data-nav]').forEach(a => a.classList.remove('on')); window.scrollTo(0, 0); lastBase = 'user'; openUser(h.slice(2)); return; }
   const base = isDetail ? lastBase : (['home', 'rank', 'create', 'chats', 'me', 'edit', 'reset', 'noti', 'search', 'support'].includes(h) ? h : 'home');
   const tab = { home: 'home', rank: 'home', create: 'create', chats: 'chats', me: 'me', edit: 'me', reset: 'me', noti: 'home', search: 'home', support: 'support', user: '' }[base];
@@ -2678,6 +2813,7 @@ function rerender() {
   if (h.startsWith('chat-')) { if (!C.char || C.id !== h.slice(5)) route(); return; }
   if (h.startsWith('c-')) { renderBase(lastBase); renderDetail(h.slice(2)); return; }
   if (h.startsWith('u-')) { renderUser(); return; }
+  if (h.startsWith('st-')) { paintStats(); return; }
   if (h === 'edit' && document.activeElement && document.activeElement.closest && document.activeElement.closest('#editForm')) {
     /* keep typed text: only refresh the images */
     const f = $('#editForm'); const keep = { nickname: f.nickname.value, handle: f.handle.value, bio: f.bio.value }; renderEdit(); const g = $('#editForm'); for (const k in keep) g[k].value = keep[k]; return;
@@ -2737,7 +2873,9 @@ document.addEventListener('click', e => {
   if ((m = t.closest('[data-delconfirm]'))) { deletePlot(m.dataset.delconfirm); return; }
   if ((m = t.closest('[data-mrowmore]'))) { const id = m.dataset.mrowmore; document.body.classList.add('sheet-open'); $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet"><div class="grab"></div><div class="menu" style="margin:0"><a class="mi" href="#ed-${id}" data-close>${I.pen}수정하기</a><button class="mi" data-askdel="${id}" style="color:#ffb3bf">${I.out}삭제하기</button></div></div>`; return; }
   if ((m = t.closest('[data-askdel]'))) { const id = m.dataset.askdel; closeSheet(); setTimeout(() => confirmDelete(id), 10); return; }
-  if ((m = t.closest('[data-stats]'))) { const c = (S.mine || []).find(x => x.id === m.dataset.stats); if (c) toast(`대화방 ${c.stats.chats} · 대화량 ${c.stats.msgs} · 찜 ${c.stats.favs}`); return; }
+  if ((m = t.closest('[data-stats]'))) { location.hash = '#st-' + m.dataset.stats; return; }
+  if ((m = t.closest('[data-stdays]'))) { ST.days = +m.dataset.stdays; loadStats(); return; }
+  if ((m = t.closest('[data-stopen]'))) { const k = +m.dataset.stopen; ST.open = ST.open === k ? -1 : k; paintStats(); return; }
   if (t.closest('[data-closepreview]')) { $('#detail').innerHTML = ''; return; }
   if ((m = t.closest('[data-cover]'))) { const img = $('#heroImg'), b = m.querySelector('img'); if (img && b) img.src = b.src; document.querySelectorAll('[data-cover]').forEach(x => x.classList.toggle('on', x === m)); return; }
   if ((m = t.closest('[data-pvview]'))) { openPreview(m.dataset.pvview === 'cover'); return; }
