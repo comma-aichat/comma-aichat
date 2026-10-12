@@ -664,6 +664,21 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .basics .brow{color:var(--text);font-weight:600}
 .basics .bi b{display:block;color:var(--pink2);font-size:13.5px;margin-bottom:2px}
 .basics .bi p{white-space:pre-line}
+.kwlist{display:grid;gap:10px}
+.kwi{display:grid;gap:6px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line2)}
+.kwi .kwh{display:flex;align-items:center;gap:6px}
+.kwi .kwh input{flex:1;min-width:0;min-height:0;height:30px;padding:0;border:0;background:none;box-shadow:none;color:var(--pink2);font:700 14.5px var(--f-body);outline:0}
+.kwi .kwh input::placeholder{color:var(--text3);font-weight:500}
+.kwi .kwh button{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--text3)}
+.kwi .kwh button .ico{width:17px;height:17px}
+.kwi textarea{width:100%;min-height:44px;padding:0;border:0;background:none;color:var(--text);font:inherit;font-size:16px;outline:0;resize:vertical}
+.kwi textarea::placeholder{color:var(--text3)}
+.kwi:focus-within{border-color:rgba(255,79,154,.6);box-shadow:0 0 0 4px rgba(255,79,154,.12)}
+.kwchips{display:flex;flex-wrap:wrap;gap:8px}
+.kwchip{height:34px;padding:0 13px;border-radius:99px;background:var(--card2);color:var(--text2);font-size:14px;font-weight:500}
+.kwchip.add{color:var(--pink2)}
+.kwchip:active{transform:scale(.96)}
+.kwhint{margin:-2px 0 0;color:var(--text3);font-size:12.5px}
 
 /* support */
 .sup{display:grid;justify-items:center;gap:14px;margin:18px 16px 0;padding:34px 22px 26px;border-radius:var(--r-md);background:var(--bg2);border:1px solid var(--line);text-align:center}
@@ -881,7 +896,11 @@ const EDTABS = [['prompt', '프롬프트', true], ['lore', '설정집'], ['style
 const blankData = () => ({ title: '', desc: '', rules: '', chars: [{ name: '', desc: '', images: [] }], personas: [], examples: [], lore: [], style: { difficulty: 'normal', pace: 'natural', pov: '3', tense: 'past', length: 'auto' }, intro: [], covers: [], tagline: '', tags: [], cat: '일상', customOn: false, customMd: '', showExamples: false, commentOn: false, comment: '', isPublic: true, allowComments: true });
 const E = { id: null, status: 'draft', tab: 'prompt', data: null, tried: false, dirty: false, mode: 'char', ci: 0, adv: false, saving: false, editing: -1 };
 const len = s => (s || '').length;
-const promptLen = d => len(d.title) + len(d.desc) + len(d.rules) + d.chars.reduce((s, c) => s + len(c.name) + len(c.desc), 0);
+const KW_SUGGEST = ['외모', '성격', '말투', '나이', '관계', '좋아하는 것', '싫어하는 것', '버릇', '과거', '비밀'];
+const kwLen = c => (c.kw || []).reduce((s, x) => s + len(x.k) + len(x.v), 0);
+/* the AI and the detail page read one text: free description first, then each keyword as a bold heading */
+const composeDesc = c => [(c.desc || '').trim(), ...(c.kw || []).filter(x => x.k.trim() && x.v.trim()).map(x => `**${x.k.trim()}**\n${x.v.trim()}`)].filter(Boolean).join('\n\n');
+const promptLen = d => len(d.title) + len(d.desc) + len(d.rules) + d.chars.reduce((s, c) => s + len(c.name) + len(c.desc) + kwLen(c), 0);
 const exLen = d => d.examples.reduce((s, x) => s + len(x.text), 0);
 const introLen = d => d.intro.reduce((s, x) => s + (x.type === 'img' ? 0 : len(x.text)), 0);
 const charName = (d, i) => (d.chars[i] && d.chars[i].name.trim()) || `캐릭터 ${i + 1}`;
@@ -894,6 +913,7 @@ function dataFromRow(r) {
   for (const k of ['gender', 'rules', 'chars', 'personas', 'examples', 'lore', 'intro', 'customOn', 'customMd', 'showExamples', 'commentOn', 'comment']) if (p[k] !== undefined) d[k] = p[k];
   d.style = Object.assign(d.style, p.style || {});
   if (!d.chars.length) d.chars = [{ name: '', desc: '', images: [] }];
+  d.chars = d.chars.map(c => c.kw ? Object.assign({}, c, { desc: c.note || '', kw: c.kw.map(x => ({ k: x.k || '', v: x.v || '' })) }) : c);
   return d;
 }
 const draftKey = () => 'ed.' + (E.id || 'new');
@@ -946,6 +966,15 @@ function renderEditor(keepScroll) {
 }
 function cnt(v, max) { return `<em class="${len(v) > max ? 'over' : ''}">${len(v)}/${max}</em>`; }
 const field = (label, key, val, max, ph, opts = {}) => `<label class="fld"><span><b class="lab">${opts.req ? '<sup>*</sup>' : ''}${label}</b>${opts.noCount ? '' : `<em data-cnt="${key}" data-max="${max}">${len(val)}/${max}</em>`}</span>${opts.area ? `<textarea data-k="${key}" maxlength="${max}" rows="${opts.rows || 4}" placeholder="${esc(ph)}">${esc(val)}</textarea>` : `<input data-k="${key}" maxlength="${max}" value="${esc(val)}" placeholder="${esc(ph)}">`}</label>`;
+function kwEditor(c, i) {
+  const kw = c.kw || [], used = new Set(kw.map(x => x.k.trim()));
+  const sug = KW_SUGGEST.filter(k => !used.has(k));
+  return `<div class="fld"><span><b class="lab">키워드</b><em>선택</em></span>
+    ${kw.length ? `<div class="kwlist">${kw.map((x, j) => `<div class="kwi"><div class="kwh"><input data-k="chars.${i}.kw.${j}.k" maxlength="12" value="${esc(x.k)}" placeholder="키워드 이름" aria-label="키워드 이름"><button data-delkw="${i}.${j}" aria-label="키워드 삭제">${I.close}</button></div>
+      <textarea data-k="chars.${i}.kw.${j}.v" maxlength="600" rows="2" placeholder="${esc(x.k.trim() ? `${x.k.trim()}에 대해 적어 주세요` : '내용을 적어 주세요')}" aria-label="${esc(x.k || '키워드')} 내용">${esc(x.v)}</textarea></div>`).join('')}</div>` : '<p class="kwhint">외모·성격·말투처럼 키워드를 붙여 정리할 수 있어요. 위 설명만 써도 괜찮아요.</p>'}
+    ${kw.length < 12 ? `<div class="kwchips">${sug.map(k => `<button class="kwchip" data-addkw="${i}" data-kw="${esc(k)}">+ ${esc(k)}</button>`).join('')}<button class="kwchip add" data-addkw="${i}" data-kw="">+ 직접 입력</button></div>` : ''}
+  </div>`;
+}
 function tabPrompt() {
   const d = E.data;
   return `<h3 class="edh">기본 설정</h3><div class="box">
@@ -961,6 +990,7 @@ function tabPrompt() {
         ${c.images.length < LIM.cimg ? `<label class="addimg"><input type="file" accept="image/*" data-upimg="c${i}" hidden>${I.plus}<span>${c.images.length}/${LIM.cimg}</span><small>캐릭터 이미지</small></label>` : ''}</div>
       ${field('이름', `chars.${i}.name`, c.name, LIM.cname, '짧은 이름이 부르기 편해요. 예) 수현', { req: true })}
       ${field('설명', `chars.${i}.desc`, c.desc, 2000, '캐릭터의 특징, 행동, 감정 표현을 써 주면 개성 있는 캐릭터가 돼요.\n예) 수현은 말수가 적지만 칭찬을 들으면 귀가 빨개진다.', { area: true, rows: 5, noCount: true })}
+      ${kwEditor(c, i)}
     </div>`).join('')}
     <p class="note">※ 실존 인물, 다른 작품의 캐릭터, 선정적이거나 저작권을 침해하는 캐릭터는 삭제될 수 있어요.</p>
     <button class="addrow" data-addchar ${d.chars.length >= LIM.chars ? 'disabled' : ''}>${I.plus}캐릭터 추가 ${d.chars.length}/${LIM.chars}</button>
@@ -1101,7 +1131,7 @@ function buildRow(publish) {
   return {
     name: (d.title.trim() || '제목 없는 캐릭터').slice(0, 40), tagline: d.tagline.trim().slice(0, 80), intro: d.desc.slice(0, 2400), greeting: firstMsg ? firstMsg.text.slice(0, 500) : '',
     category: d.cat, tags: d.tags.slice(0, 10), image_url: img, images: d.covers.slice(0, 10), status, is_public: status === 'published' && d.isPublic, allow_comments: d.allowComments,
-    plot: { v: 1, gender: d.gender || '', rules: d.rules, chars: d.chars, personas: d.personas, examples: d.examples, lore: d.lore, style: d.style, intro: d.intro, customOn: d.customOn, customMd: d.customMd, showExamples: d.showExamples, commentOn: d.commentOn, comment: d.comment, isPublic: d.isPublic },
+    plot: { v: 1, gender: d.gender || '', rules: d.rules, chars: d.chars.map(c => (c.kw || []).length ? Object.assign({}, c, { note: c.desc, desc: composeDesc(c), kw: c.kw.filter(x => x.k.trim() || x.v.trim()) }) : c), personas: d.personas, examples: d.examples, lore: d.lore, style: d.style, intro: d.intro, customOn: d.customOn, customMd: d.customMd, showExamples: d.showExamples, commentOn: d.commentOn, comment: d.comment, isPublic: d.isPublic },
   };
 }
 async function saveEditor(publish, thenClose) {
@@ -1177,6 +1207,8 @@ document.addEventListener('click', e => {
   if (t.closest('[data-delplot]')) { closeSheet(); setTimeout(() => confirmDelete(E.id), 10); return; }
   if (t.closest('[data-preview]')) { closeSheet(); openPreview(false); return; }
   if (t.closest('[data-adv]')) { E.adv = !E.adv; renderEditor(true); return; }
+  if ((m = t.closest('[data-addkw]'))) { const c = E.data.chars[+m.dataset.addkw]; c.kw = c.kw || []; if (c.kw.length < 12) { c.kw.push({ k: m.dataset.kw, v: '' }); touch(); renderEditor(true); const j = c.kw.length - 1; const f = document.querySelector(`[data-k="chars.${m.dataset.addkw}.kw.${j}.${m.dataset.kw ? 'v' : 'k'}"]`); if (f) f.focus({ preventScroll: false }); } return; }
+  if ((m = t.closest('[data-delkw]'))) { const [ci, j] = m.dataset.delkw.split('.').map(Number); E.data.chars[ci].kw.splice(j, 1); touch(); renderEditor(true); return; }
   if (t.closest('[data-addchar]')) { if (E.data.chars.length < LIM.chars) { E.data.chars.push({ name: '', desc: '', images: [] }); touch(); renderEditor(true); } return; }
   if ((m = t.closest('[data-delchar]'))) { const i = +m.dataset.delchar; E.data.chars.splice(i, 1); E.data.intro = E.data.intro.filter(x => !(x.type === 'char' && x.ci === i)).map(x => (x.type === 'char' && x.ci > i ? Object.assign(x, { ci: x.ci - 1 }) : x)); E.data.examples = E.data.examples.filter(x => x.who !== i).map(x => (typeof x.who === 'number' && x.who > i ? Object.assign(x, { who: x.who - 1 }) : x)); E.ci = 0; touch(); renderEditor(true); return; }
   if ((m = t.closest('[data-delimg]'))) { const v = m.dataset.delimg; if (v.startsWith('v.')) E.data.covers.splice(+v.slice(2), 1); else { const [ci, j] = v.slice(1).split('.').map(Number); E.data.chars[ci].images.splice(j, 1); } touch(); renderEditor(true); return; }
@@ -2298,7 +2330,7 @@ function detailHTML(c, preview, coverView) {
   if (p) {
     const about = p.customOn && p.customMd ? `<div class="md">${miniMd(p.customMd)}</div>` : c.intro ? `<p>${esc(c.intro)}</p>` : '';
     if (about) secs.push(`<section class="ds"><h3>소개</h3>${about}</section>`);
-    if (p.chars.some(x => x.name)) secs.push(`<section class="ds"><h3>캐릭터</h3>${p.chars.filter(x => x.name).map(x => `<div class="ccard">${x.images.length ? `<div class="cimgs">${x.images.map((u, k) => `<img class="${k ? '' : 'big'}" src="${esc(u)}" alt="">`).join('')}</div>` : ''}<b class="ccname">${esc(x.name)}</b>${x.desc ? `<div class="md">${miniMd(x.desc)}</div>` : ''}</div>`).join('')}</section>`);
+    if (p.chars.some(x => x.name)) secs.push(`<section class="ds"><h3>캐릭터</h3>${p.chars.filter(x => x.name).map(x => `<div class="ccard">${x.images.length ? `<div class="cimgs">${x.images.map((u, k) => `<img class="${k ? '' : 'big'}" src="${esc(u)}" alt="">`).join('')}</div>` : ''}<b class="ccname">${esc(x.name)}</b>${(x.kw || []).some(k => k.k && k.v) ? `${x.note ? `<div class="md">${miniMd(x.note)}</div>` : ''}<div class="basics">${x.kw.filter(k => k.k && k.v).map(k => `<div class="bi"><b>${esc(k.k)}</b><p>${esc(k.v)}</p></div>`).join('')}</div>` : x.desc ? `<div class="md">${miniMd(x.desc)}</div>` : ''}</div>`).join('')}</section>`);
     if (p.lore.some(l => l.keys.length)) secs.push(`<section class="ds"><h3>설정집 <span class="qmark" title="키워드가 대화에 나오면 AI가 이 설정을 참고해요">?</span></h3>${p.lore.filter(l => l.keys.length).map(l => `<div class="lcard"><b>${esc(l.keys.join(' · '))}</b><span>이 키워드가 나오면 AI가 설정을 참고해요</span></div>`).join('')}</section>`);
     if (p.intro.length) secs.push(`<section class="ds"><h3>인트로</h3><div class="dscene">${p.intro.map(line).join('')}</div></section>`);
     if (p.showExamples && p.examples.length) secs.push(`<section class="ds"><h3>상황 예시</h3><div class="dscene">${p.examples.map(x => line({ type: x.who === 'user' ? 'user' : 'char', ci: x.who === 'user' ? 0 : x.who, text: x.text })).join('')}</div></section>`);
