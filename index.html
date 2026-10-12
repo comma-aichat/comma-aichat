@@ -664,6 +664,19 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .basics .brow{color:var(--text);font-weight:600}
 .basics .bi b{display:block;color:var(--pink2);font-size:13.5px;margin-bottom:2px}
 .basics .bi p{white-space:pre-line}
+.crop{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;background:#0b0a0d;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);touch-action:none;user-select:none;-webkit-user-select:none}
+.crop-top{display:grid;grid-template-columns:64px 1fr 64px;align-items:center;height:58px;padding:0 8px;text-align:center}
+.crop-top b{font-family:var(--f-head);font-weight:800;font-size:18px}
+.crop-ok{height:40px;color:var(--pink);font-weight:700;font-size:16px}
+.crop-hint{align-self:center;margin:4px 16px 0;padding:9px 18px;border-radius:99px;background:var(--card);color:var(--text);font-size:14px;font-weight:600;text-align:center}
+.crop-stage{position:relative;flex:1;overflow:hidden;cursor:grab}
+.crop-stage:active{cursor:grabbing}
+.crop-stage img{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;will-change:transform;pointer-events:none}
+.crop-frame{position:absolute;pointer-events:none;border:2px solid var(--pink);box-shadow:0 0 0 9999px rgba(11,10,13,.66)}
+.crop-frame.round{border-radius:50%;outline:2px solid rgba(255,79,154,.55);outline-offset:-2px}
+.crop-frame.round::before{content:"";position:absolute;inset:-2px;border:1px solid rgba(255,79,154,.35)}
+.crop-zoom{display:flex;align-items:center;gap:12px;padding:14px 28px 18px;color:var(--text3);font-size:18px}
+.crop-zoom input{flex:1;accent-color:var(--pink)}
 .kwlist{display:grid;gap:10px}
 .kwi{display:grid;gap:6px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line2)}
 .kwi .kwh{display:flex;align-items:center;gap:6px}
@@ -1081,9 +1094,8 @@ let rsT = 0; function renderEditorSoon() { clearTimeout(rsT); rsT = setTimeout((
 const TMP_ADMIN = 'c20e9295-dfa9-46e1-a24f-73d3ec7aa02c';
 async function tmpReplaceOfficialImage(id, file) {
   if (!file || !/^image\//.test(file.type)) return;
-  toast('이미지를 올리는 중…');
   try {
-    const blob = await cropImage(file, 768, 960);
+    const blob = await cropImage(file, 768, 960); toast('이미지를 올리는 중…');
     const path = `${S.user.id}/official-${Date.now()}.${extOf(blob)}`;
     const up = await sb.storage.from('character-images').upload(path, blob, { contentType: blob.type });
     if (up.error) throw up.error;
@@ -1091,7 +1103,7 @@ async function tmpReplaceOfficialImage(id, file) {
     const { data, error } = await sb.from('characters').update({ image_url: url }).eq('id', id).eq('is_official', true).select('id');
     if (error || !data || !data.length) throw error || new Error('no row');
     toast('대표 이미지를 바꿨어요'); setTimeout(() => location.reload(), 700);
-  } catch (e) { toast('이미지를 바꾸지 못했어요'); }
+  } catch (e) { if (!isCancel(e)) toast('이미지를 바꾸지 못했어요'); }
 }
 const TMP_FIELDS = [['name', '이름', 40, 0], ['tagline', '한 줄 소개', 80, 0], ['intro', '소개', 2400, 4], ['personality', '성격', 2000, 4], ['speech', '말투', 1500, 4], ['world', '세계관', 3000, 4], ['greeting', '첫 인사', 500, 3]];
 async function tmpEditOfficial(id) {
@@ -1113,16 +1125,16 @@ async function uploadEdImage(file, target) {
   if (!file) return;
   if (!/^image\//.test(file.type)) { toast('사진 파일만 올릴 수 있어요'); return; }
   if (file.size > 20 * 1024 * 1024) { toast('20MB 이하 이미지를 골라 주세요'); return; }
-  toast('이미지를 올리는 중…');
   try {
-    const blob = target === 'i' ? await cropImage(file, 1200, 600) : await cropImage(file, 768, 960);
+    const blob = target === 'i' ? await cropImage(file, 1200, 600, { hint: '인트로에 보여 줄 영역을 지정해 주세요' }) : target === 'v' ? await cropImage(file, 768, 960, { hint: '표지로 보여 줄 영역을 지정해 주세요' }) : await cropImage(file, 768, 768, { round: true });
+    toast('이미지를 올리는 중…');
     const path = `${S.user.id}/plot-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${extOf(blob)}`;
     const { error } = await sb.storage.from('character-images').upload(path, blob, { contentType: blob.type });
     if (error) throw error;
     const url = sb.storage.from('character-images').getPublicUrl(path).data.publicUrl;
     if (target === 'v') E.data.covers.push(url); else if (target === 'i') E.data.intro.push({ type: 'img', url, text: '' }); else E.data.chars[+target.slice(1)].images.push(url);
     touch(); renderEditor(true); toast('이미지를 올렸어요');
-  } catch (e) { toast('이미지를 올리지 못했어요. 다른 이미지로 시도해 주세요'); }
+  } catch (e) { if (!isCancel(e)) toast('이미지를 올리지 못했어요. 다른 이미지로 시도해 주세요'); }
 }
 function buildRow(publish) {
   const d = E.data; const firstMsg = d.intro.find(m => m.type === 'char' && m.text.trim()) || d.intro.find(m => m.type !== 'img' && m.text.trim());
@@ -1523,13 +1535,12 @@ async function uploadPersonaImg(file) {
   if (!/^image\//.test(file.type)) { toast('사진 파일만 올릴 수 있어요'); return; }
   const keep = { name: $('#pf-name').value, desc: $('#pf-desc').value };
   try {
-    toast('이미지를 올리는 중…');
-    const blob = await cropImage(file, 512, 512); const path = `${S.user.id}/persona-${Date.now()}.${extOf(blob)}`;
+    const blob = await cropImage(file, 512, 512, { round: true }); toast('이미지를 올리는 중…'); const path = `${S.user.id}/persona-${Date.now()}.${extOf(blob)}`;
     const { error } = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type });
     if (error) throw error;
     DR.img = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
     openDrawer('pform'); $('#pf-name').value = keep.name; $('#pf-desc').value = keep.desc;
-  } catch (e) { toast('이미지를 올리지 못했어요'); }
+  } catch (e) { if (!isCancel(e)) toast('이미지를 올리지 못했어요'); }
 }
 async function savePersona() {
   const name = $('#pf-name').value.trim(), description = $('#pf-desc').value.trim();
@@ -2031,23 +2042,70 @@ function openMenu() {
 }
 
 /* image helpers: crop to a box and encode webp in the browser before upload */
-function cropImage(file, w, h) {
+/* Cropper: the person drags/pinches the photo inside a pink frame (round for profile pictures), then we draw exactly that frame */
+function encodeCanvas(cv) {
+  return new Promise((res, rej) => cv.toBlob(b => {
+    /* Safari can't encode webp and silently returns png; fall back to jpeg there */
+    if (b && b.type === 'image/webp') return res(b);
+    cv.toBlob(j => j ? res(j) : rej(new Error('encode')), 'image/jpeg', 0.88);
+  }, 'image/webp', 0.86));
+}
+function cropImage(file, w, h, opts = {}) {
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(file); const img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
     img.onload = () => {
-      const r = w / h; let sw = img.width, sh = img.height;
-      if (sw / sh > r) sw = sh * r; else sh = sw / r;
-      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, 0, 0, w, h); URL.revokeObjectURL(url);
-      /* Safari can't encode webp and silently returns png; fall back to jpeg there */
-      cv.toBlob(b => {
-        if (b && b.type === 'image/webp') return res(b);
-        cv.toBlob(j => j ? res(j) : rej(new Error('encode')), 'image/jpeg', 0.88);
-      }, 'image/webp', 0.86);
+      const ov = document.createElement('div'); ov.className = 'crop'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', '이미지 자르기');
+      ov.innerHTML = `<div class="crop-top"><button class="iconbtn" data-c="x" aria-label="취소">${I.close}</button><b>이미지 자르기</b><button class="crop-ok" data-c="ok">완료</button></div>
+        <p class="crop-hint">${esc(opts.hint || (opts.round ? '프로필 이미지로 들어갈 영역을 지정해 주세요' : '보여 줄 영역을 지정해 주세요'))}</p>
+        <div class="crop-stage"><img alt="" draggable="false"><div class="crop-frame${opts.round ? ' round' : ''}"></div></div>
+        <div class="crop-zoom"><span>−</span><input type="range" min="1" max="4" step="0.01" value="1" aria-label="확대"><span>+</span></div>`;
+      document.body.append(ov); document.body.classList.add('sheet-open');
+      const st = ov.querySelector('.crop-stage'), im = st.querySelector('img'), fr = st.querySelector('.crop-frame'), zr = ov.querySelector('input');
+      im.src = url;
+      let F = {}, base = 1, z = 1, x = 0, y = 0;
+      const layout = () => {
+        const W = st.clientWidth, H = st.clientHeight, pad = 20, r = w / h;
+        let fw = W - pad * 2, fh = fw / r; if (fh > H - pad * 2) { fh = H - pad * 2; fw = fh * r; }
+        F = { l: (W - fw) / 2, t: (H - fh) / 2, w: fw, h: fh };
+        Object.assign(fr.style, { left: F.l + 'px', top: F.t + 'px', width: fw + 'px', height: fh + 'px' });
+        base = Math.max(fw / img.width, fh / img.height);
+      };
+      const clamp = () => {
+        const s = base * z, iw = img.width * s, ih = img.height * s;
+        x = Math.min(F.l, Math.max(F.l + F.w - iw, x)); y = Math.min(F.t, Math.max(F.t + F.h - ih, y));
+        im.style.transform = `translate(${x}px,${y}px) scale(${s})`;
+      };
+      const zoomAt = (nz, cx, cy) => { nz = Math.min(4, Math.max(1, nz)); const k = nz / z; x = cx - (cx - x) * k; y = cy - (cy - y) * k; z = nz; zr.value = z; clamp(); };
+      layout(); x = F.l + (F.w - img.width * base) / 2; y = F.t + (F.h - img.height * base) / 2; clamp();
+      const onResize = () => { const cx = F.l + F.w / 2, cy = F.t + F.h / 2, rx = (cx - x) / (base * z), ry = (cy - y) / (base * z); layout(); x = F.l + F.w / 2 - rx * base * z; y = F.t + F.h / 2 - ry * base * z; clamp(); };
+      addEventListener('resize', onResize);
+      const pts = new Map(); let last = null;
+      const mid = () => { const a = [...pts.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) }; };
+      const rel = e => { const r = st.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+      st.addEventListener('pointerdown', e => { st.setPointerCapture(e.pointerId); pts.set(e.pointerId, rel(e)); last = pts.size === 2 ? mid() : rel(e); });
+      st.addEventListener('pointermove', e => {
+        if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, rel(e));
+        if (pts.size === 2) { const m = mid(); if (last && last.d) { x += m.x - last.x; y += m.y - last.y; zoomAt(z * m.d / last.d, m.x, m.y); } last = m; }
+        else { const p = rel(e); x += p.x - last.x; y += p.y - last.y; last = p; clamp(); }
+      });
+      const up = e => { pts.delete(e.pointerId); last = pts.size === 2 ? mid() : pts.size ? [...pts.values()][0] : null; };
+      st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
+      st.addEventListener('wheel', e => { e.preventDefault(); const p = rel(e); zoomAt(z * Math.exp(-e.deltaY / 400), p.x, p.y); }, { passive: false });
+      zr.addEventListener('input', () => zoomAt(+zr.value, F.l + F.w / 2, F.t + F.h / 2));
+      const close = () => { removeEventListener('resize', onResize); ov.remove(); document.body.classList.remove('sheet-open'); URL.revokeObjectURL(url); };
+      ov.addEventListener('click', async e => {
+        const b = e.target.closest('[data-c]'); if (!b) return;
+        if (b.dataset.c === 'x') { close(); rej(new Error('cancel')); return; }
+        const s = base * z, cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, (F.l - x) / s, (F.t - y) / s, F.w / s, F.h / s, 0, 0, w, h);
+        close(); try { res(await encodeCanvas(cv)); } catch (er) { rej(er); }
+      });
     };
-    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); }; img.src = url;
+    img.src = url;
   });
 }
+const isCancel = e => e && e.message === 'cancel';
 const extOf = b => b.type === 'image/webp' ? 'webp' : 'jpg';
 function oldPath(url) { const m = url && url.match(/\/avatars\/(.+)$/); return m && decodeURIComponent(m[1]).startsWith(S.user.id + '/') ? decodeURIComponent(m[1]) : null; }
 /* 프로필 편집: 고른 사진은 '저장'을 눌러야 반영 */
@@ -2059,11 +2117,11 @@ async function uploadImage(file, kind) {
   if (!/^image\//.test(file.type) && !/\.(heic|heif)$/i.test(file.name || '')) { toast('사진 파일만 올릴 수 있어요'); return; }
   if (file.size > 20 * 1024 * 1024) { toast('20MB 이하 이미지를 골라 주세요'); return; }
   try {
-    const blob = kind === 'banner' ? await cropImage(file, 1200, 400) : await cropImage(file, 512, 512);
+    const blob = kind === 'banner' ? await cropImage(file, 1200, 400, { hint: '배너로 보여 줄 영역을 지정해 주세요' }) : await cropImage(file, 512, 512, { round: true });
     if (PE[kind] && PE[kind].url) URL.revokeObjectURL(PE[kind].url);
     PE[kind] = { blob, url: URL.createObjectURL(blob) };
     rerender(); toast('저장을 누르면 바뀌어요');
-  } catch (e) { toast('이 이미지는 쓸 수 없어요. 다른 이미지로 시도해 주세요'); }
+  } catch (e) { if (!isCancel(e)) toast('이 이미지는 쓸 수 없어요. 다른 이미지로 시도해 주세요'); }
 }
 function removeImage(kind) {
   if (PE[kind] && PE[kind].url) URL.revokeObjectURL(PE[kind].url);
