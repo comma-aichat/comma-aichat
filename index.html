@@ -456,6 +456,8 @@ body.editing .app{padding-bottom:40px}
 .sms{display:inline-block;max-width:100%;margin:3px 0;padding:7px 13px;border-radius:16px 16px 4px 16px;background:var(--pink);color:#fff;font-style:normal;line-height:1.45;white-space:pre-line;box-shadow:0 4px 14px var(--glow)}
 .sms b,.sms i{color:#fff}
 .tsec{display:block;margin-top:6px;color:var(--text3);font-size:12.5px}
+.tagbtn{font:inherit;color:inherit;cursor:pointer;padding:0;background:none}
+.tagbtn:hover{color:var(--pink2)}
 .dl.user .sms{background:#3a3640;box-shadow:none}
 s{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
 .dn p .sms,.cn .sms,.dl p i .sms{font-style:normal}
@@ -2335,7 +2337,7 @@ function cardHTML(c, i) {
     ${c.official ? '<span class="ori" title="Comma 오리지널">C</span>' : ''}
     <button class="fav ${on ? 'on' : ''}" data-fav="${c.id}" aria-label="찜" aria-pressed="${on}">${I.heart}</button>
     <a href="#c-${c.id}" class="info"><span class="nm">${esc(c.name)}</span><span class="one">${inlineMd(c.tl, { char: c.name })}</span>
-      <span class="tg">${c.tags.map(t => '#' + esc(t)).join(' ')}</span><span class="pl">${esc(c.cat)}${c.greet ? ' · ' + esc(c.greet.slice(0, 28)) + (c.greet.length > 28 ? '…' : '') : ''}</span></a>
+      <span class="tg">${c.tags.map(t => `<span class="tagbtn" role="link" tabindex="0" data-srgo="#${esc(t)}">#${esc(t)}</span>`).join(' ')}</span><span class="pl">${esc(c.cat)}${c.greet ? ' · ' + esc(c.greet.slice(0, 28)) + (c.greet.length > 28 ? '…' : '') : ''}</span></a>
   </article>`;
 }
 const skelGrid = n => `<div class="grid">${Array.from({ length: n }, () => '<div class="card skel"><div class="art"></div><div class="info" style="margin-top:8px"><span class="sk"></span><span class="sk short"></span></div></div>').join('')}</div>`;
@@ -2588,7 +2590,7 @@ function detailHTML(c, preview, coverView) {
   return `<div class="detail${preview ? ' pv' : ''}" role="dialog" aria-label="${esc(c.name)} 상세" id="detailScroll">${topbar}<div class="d-wrap">
     <div class="d-hero">${hero}${preview ? '' : `<button class="hfav ${fav ? 'on' : ''}" data-fav="${c.id}" aria-label="찜" aria-pressed="${fav}">${I.heart}<span>${fmt(c.stats.favs)}</span></button>`}</div>
     ${covers && covers.length > 1 ? `<div class="thumbs" role="tablist" aria-label="커버 이미지">${covers.map((u, k) => `<button class="${k ? '' : 'on'}" data-cover="${k}" aria-label="커버 ${k + 1}"><img src="${esc(u)}" alt=""></button>`).join('')}</div>` : ''}
-    <div class="d-head"><h2>${esc(c.name)}</h2>${c.tl ? `<p class="tl">${inlineMd(c.tl)}</p>` : ''}${c.tags.length ? `<p class="dtags">${c.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}
+    <div class="d-head"><h2>${esc(c.name)}</h2>${c.tl ? `<p class="tl">${inlineMd(c.tl)}</p>` : ''}${c.tags.length ? `<p class="dtags">${c.tags.map(t => `<button class="tagbtn" data-srgo="#${esc(t)}">#${esc(t)}</button>`).join(' ')}</p>` : ''}
       <div class="dchips"><span class="dchip">${I.bubble}${fmt(c.stats.msgs)}</span>${!preview && c.dbId && c.allowComments ? `<button class="dchip" data-gocmts>${I.bubble.replace('class="ico"', 'class="ico" style="fill:currentColor"')}<span>댓글 ${fmt(c.stats.comments || 0)}</span></button>` : ''}${personas ? `<button class="dchip" data-personas="${esc(c.id)}">${I.user}추천 대화 프로필</button>` : ''}${lore ? `<span class="dchip">${I.book}설정집</span>` : ''}<span class="dchip soft">${esc(c.cat)}</span></div></div>
     <div class="dsep"></div>${byline}
     ${secs.join('<div class="dsep"></div>')}
