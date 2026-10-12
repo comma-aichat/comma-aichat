@@ -447,6 +447,11 @@ body.editing .app{padding-bottom:40px}
 .dn p b{font-style:normal;color:var(--text)}
 .dl p{white-space:normal}
 .dl p i{color:var(--text2)}
+.sms{display:inline-block;max-width:100%;margin:3px 0;padding:7px 13px;border-radius:16px 16px 4px 16px;background:var(--pink);color:#fff;font-style:normal;line-height:1.45;white-space:pre-line;box-shadow:0 4px 14px var(--glow)}
+.sms b,.sms i{color:#fff}
+.dl.user .sms{background:#3a3640;box-shadow:none}
+s{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
+.dn p .sms,.cn .sms,.dl p i .sms{font-style:normal}
 .dl p b{color:var(--text)}
 .ds{padding:24px 20px 4px}
 .cimg{display:flex;align-items:center;gap:4px;height:44px;padding:0 10px 0 2px;margin-right:4px;color:var(--text2);font-size:13px;cursor:pointer;border-right:1px solid var(--line)}
@@ -1032,6 +1037,7 @@ function tabStyle() {
     return `<div class="stg"><b>${label}</b><div class="segs" style="grid-template-columns:repeat(${opts.length},1fr)">${opts.map(([v, l]) => `<button class="${st[k] === v ? 'on' : ''}" data-style="${k}:${v}" aria-pressed="${st[k] === v}">${l}</button>`).join('')}</div><p>${cur[2]}</p></div>`; }).join('')}</div>`).join('');
 }
 function tabIntro() {
+  NAMES = { user: (S.profile && S.profile.nickname) || '당신', char: (E.data.chars[0] && E.data.chars[0].name.trim()) || '캐릭터' };
   const d = E.data, modes = [['narr', '내레이터'], ['user', '유저'], ['char', '캐릭터']];
   const who = m => m.type === 'narr' ? '' : m.type === 'user' ? '유저' : charName(d, m.ci || 0);
   return `<h3 class="edh">첫 상황을 만들어 주세요</h3><p class="edsub">대화를 시작하면 이 장면이 먼저 보여요. 내레이터 서술과 캐릭터 대사를 섞어 보세요.</p>
@@ -1253,14 +1259,37 @@ function openPreview(cover) {
 }
 
 /* ============ mini markdown for 소개글 (escaped first, https images only) ============ */
-function inlineMd(src) {
-  return esc(src).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/==(.+?)==/g, '<mark>$1</mark>').replace(/(^|[^*])\*(?!\s)([^*]+?)\*/g, '$1<i>$2</i>').replace(/\n/g, '<br>');
+/* {{user}} / {{char}} become real names, with the Korean particle that fits the name's last syllable */
+let NAMES = null;
+const hasBatchim = w => { const ch = (w || '').trim().slice(-1), k = ch.charCodeAt(0) - 0xAC00; return k >= 0 && k <= 11171 && k % 28 !== 0; };
+const hasRieul = w => { const ch = (w || '').trim().slice(-1), k = ch.charCodeAt(0) - 0xAC00; return k >= 0 && k <= 11171 && k % 28 === 8; };
+const PARTICLES = { '이에요': ['이에요', '예요'], '예요': ['이에요', '예요'], '이야': ['이야', '야'], '이랑': ['이랑', '랑'], '랑': ['이랑', '랑'], '으로': ['으로', '로'], '로': ['으로', '로'], '이': ['이', '가'], '가': ['이', '가'], '은': ['은', '는'], '는': ['은', '는'], '을': ['을', '를'], '를': ['을', '를'], '과': ['과', '와'], '와': ['과', '와'], '아': ['아', '야'] };
+function subNames(src, over) {
+  const n = Object.assign({ user: (S.profile && S.profile.nickname) || '당신', char: '' }, NAMES || {}, over || {});
+  return String(src || '').replace(/\{\{\s*(user|char)\s*\}\}(이에요|예요|이야|이랑|랑|으로|로|이|가|은|는|을|를|과|와|아)?/gi, (_, who, pt) => {
+    const name = n[who.toLowerCase()] || (who.toLowerCase() === 'user' ? '당신' : '캐릭터');
+    if (!pt) return name;
+    const [withB, without] = PARTICLES[pt];
+    if ((pt === '으로' || pt === '로') && hasRieul(name)) return name + '로';
+    return name + (hasBatchim(name) ? withB : without);
+  });
 }
-function miniMd(src) {
+/* shared inline marks: **bold**, *soft (actions, thoughts)*, ~strike~, ≈text message≈, ==highlight== */
+function marks(h) {
+  return h.replace(/≈([^≈]+?)≈/g, (_, t) => `<span class="sms">${t.trim()}</span>`)
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[^0-9])~(?![\s~])([^~\n]+?)(?<!\s)~(?![0-9])/g, '$1<s>$2</s>')
+    .replace(/==(.+?)==/g, '<mark>$1</mark>')
+    .replace(/(^|[^*])\*(?!\s)([^*]+?)\*/g, '$1<i>$2</i>');
+}
+function inlineMd(src, over) {
+  return marks(esc(subNames(src, over))).replace(/\n/g, '<br>');
+}
+function miniMd(src, over) {
   const out = []; let list = false;
-  for (const raw0 of esc(src).split('\n')) {
+  for (const raw0 of esc(subNames(src, over)).split('\n')) {
     const raw = raw0.trim();
-    let l = raw.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/==(.+?)==/g, '<mark>$1</mark>').replace(/(^|[^*])\*(?!\s)([^*]+?)\*/g, '$1<i>$2</i>').replace(/!\[([^\]]*)\]\((https:\/\/[^)\s]+)\)/g, '<img src="$2" alt="$1" loading="lazy">');
+    let l = marks(raw).replace(/!\[([^\]]*)\]\((https:\/\/[^)\s]+)\)/g, '<img src="$2" alt="$1" loading="lazy">');
     if (/^[-•·]\s+/.test(raw)) { if (!list) { out.push('<ul>'); list = true; } out.push(`<li>${l.replace(/^[-•·]\s+/, '')}</li>`); continue; }
     if (list) { out.push('</ul>'); list = false; }
     if (/^(-{3,}|_{3,}|—{2,}|─{3,})$/.test(raw)) out.push('<hr>');
@@ -1362,6 +1391,7 @@ function chatAvatar(ci) {
 }
 function introHTML() {
   const c = C.char, p = c.plot;
+  NAMES = { user: (C.conv && C.conv.persona && C.conv.persona.name) || (S.profile && S.profile.nickname) || '당신', char: mainName() };
   const nm = i => (p && p.chars[i] && p.chars[i].name) || c.name;
   if (!p) return `<div class="dl char"><span class="dav">${chatAvatar(0)}</span><div><small>${esc(c.name)}</small><p>${inlineMd(c.greet)}</p></div></div>`;
   return p.intro.map(m => m.type === 'img' ? `<img class="dimg" src="${esc(m.url)}" alt="">` : m.type === 'narr' ? `<div class="cn">${inlineMd(m.text)}</div>`
@@ -1386,6 +1416,7 @@ function chatHeader() {
     : `<header class="top chattop"><a class="iconbtn" href="#chats" aria-label="뒤로">${I.back}</a><a class="ctitle" href="#c-${c.id}"><span class="bav">${chatAvatar(0)}</span><span class="bl"><b>${esc(c.name)}</b>${persona && persona.name ? `<small>${esc(persona.name)}(으)로 대화 중</small>` : ''}</span></a><span class="sp"></span><button class="iconbtn" data-chatmenu aria-label="대화 설정">${I.menu}</button></header>`;
 }
 function renderChat(scroll) {
+  NAMES = { user: (C.conv && C.conv.persona && C.conv.persona.name) || (S.profile && S.profile.nickname) || '당신', char: mainName() };
   const c = C.char; if (!c) return;
   $('#top').innerHTML = chatHeader();
   const lastA = [...C.msgs].reverse().find(m => m.role === 'assistant');
@@ -1879,7 +1910,7 @@ const byDb = dbId => CHARS.find(c => c.dbId === dbId);
 function basicsHTML(c) {
   const b = c.basics || {};
   const row = [b.age, b.gender, b.height].filter(Boolean).map(esc).join(' · ');
-  const item = (k, v) => v ? `<div class="bi"><b>${k}</b><p>${esc(v)}</p></div>` : '';
+  const item = (k, v) => v ? `<div class="bi"><b>${k}</b><p>${inlineMd(v, { char: c.name })}</p></div>` : '';
   const body = (row ? `<p class="brow">${row}</p>` : '') + item('외모', b.looks) + item('성격', c.pers) + item('말투', c.talk);
   return body ? `<div class="basics">${body}</div>` : '';
 }
@@ -2181,7 +2212,7 @@ function cardHTML(c, i) {
     <span class="cnt">${I.bubble}${c.stats ? fmt(c.stats.msgs) : '0'}</span>
     ${c.official ? '<span class="ori" title="Comma 오리지널">C</span>' : ''}
     <button class="fav ${on ? 'on' : ''}" data-fav="${c.id}" aria-label="찜" aria-pressed="${on}">${I.heart}</button>
-    <a href="#c-${c.id}" class="info"><span class="nm">${esc(c.name)}</span><span class="one">${esc(c.tl)}</span>
+    <a href="#c-${c.id}" class="info"><span class="nm">${esc(c.name)}</span><span class="one">${inlineMd(c.tl, { char: c.name })}</span>
       <span class="tg">${c.tags.map(t => '#' + esc(t)).join(' ')}</span><span class="pl">${esc(c.cat)}${c.greet ? ' · ' + esc(c.greet.slice(0, 28)) + (c.greet.length > 28 ? '…' : '') : ''}</span></a>
   </article>`;
 }
@@ -2248,7 +2279,7 @@ function renderRank() {
   $('#top').innerHTML = headerHome(true);
   if (S.loading) { $('#view').innerHTML = `<div class="sec">${skelGrid(4)}</div>`; return; }
   const list = CHARS.filter(matches).slice().sort((a, b) => ((b.stats ? b.stats.favs * 3 + b.stats.msgs : 0) - (a.stats ? a.stats.favs * 3 + a.stats.msgs : 0)) || a.name.localeCompare(b.name));
-  $('#view').innerHTML = `<div class="sec" style="margin-top:6px"><p class="pad" style="margin:0 0 6px;color:var(--text3);font-size:13px">찜과 대화량으로 매긴 순위예요</p><div class="rank">${list.map((c, i) => `<a class="rrow" href="#c-${c.id}"><span class="rno">${i + 1}</span><span class="thumb">${pic(c, 'r')}</span><span class="rtx"><b>${esc(c.name)}</b><span>${esc(c.tl)}</span></span><span class="rmeta"><i>♥ ${fmt(c.stats ? c.stats.favs : 0)}</i>대화 ${fmt(c.stats ? c.stats.msgs : 0)}</span></a>`).join('')}</div></div>`;
+  $('#view').innerHTML = `<div class="sec" style="margin-top:6px"><p class="pad" style="margin:0 0 6px;color:var(--text3);font-size:13px">찜과 대화량으로 매긴 순위예요</p><div class="rank">${list.map((c, i) => `<a class="rrow" href="#c-${c.id}"><span class="rno">${i + 1}</span><span class="thumb">${pic(c, 'r')}</span><span class="rtx"><b>${esc(c.name)}</b><span>${inlineMd(c.tl, { char: c.name })}</span></span><span class="rmeta"><i>♥ ${fmt(c.stats ? c.stats.favs : 0)}</i>대화 ${fmt(c.stats ? c.stats.msgs : 0)}</span></a>`).join('')}</div></div>`;
   bindHome();
 }
 function needLogin(title, text) {
@@ -2371,6 +2402,7 @@ async function fillByline(owner) {
 }
 function detailHTML(c, preview, coverView) {
   const fav = S.favs.has(c.id), p = c.plot;
+  NAMES = { user: (S.profile && S.profile.nickname) || '당신', char: (p && p.chars[0] && p.chars[0].name) || c.name };
   const nm = i => (p && p.chars[i] && p.chars[i].name) || '캐릭터';
   const covers = c.images && c.images.length ? c.images : null;
   const hero = covers ? `<img id="heroImg" src="${esc(covers[0])}" alt="">` : pic(c, 'd');
@@ -2386,16 +2418,16 @@ function detailHTML(c, preview, coverView) {
     : `<div class="dl ${m.type}"><span class="dav">${m.type === 'char' ? charAv(m.ci || 0) : I.user}</span><div><small>${m.type === 'user' ? '유저' : esc(nm(m.ci || 0))}</small><p>${inlineMd(m.text)}</p></div></div>`;
   const secs = [];
   if (p) {
-    const about = p.customOn && p.customMd ? `<div class="md">${miniMd(p.customMd)}</div>` : c.intro ? `<p>${esc(c.intro)}</p>` : '';
+    const about = p.customOn && p.customMd ? `<div class="md">${miniMd(p.customMd)}</div>` : c.intro ? `<p>${inlineMd(c.intro)}</p>` : '';
     if (about) secs.push(`<section class="ds"><h3>소개</h3>${about}</section>`);
-    if (p.chars.some(x => x.name)) secs.push(`<section class="ds"><h3>캐릭터</h3>${p.chars.filter(x => x.name).map(x => `<div class="ccard">${x.images.length ? `<div class="cimgs">${x.images.map((u, k) => `<img class="${k ? '' : 'big'}" src="${esc(u)}" alt="">`).join('')}</div>` : ''}<b class="ccname">${esc(x.name)}</b>${(x.kw || []).some(k => k.k && k.v) ? `${x.note ? `<div class="md">${miniMd(x.note)}</div>` : ''}<div class="basics">${x.kw.filter(k => k.k && k.v).map(k => `<div class="bi"><b>${esc(k.k)}</b><p>${esc(k.v)}</p></div>`).join('')}</div>` : x.desc ? `<div class="md">${miniMd(x.desc)}</div>` : ''}</div>`).join('')}</section>`);
+    if (p.chars.some(x => x.name)) secs.push(`<section class="ds"><h3>캐릭터</h3>${p.chars.filter(x => x.name).map(x => `<div class="ccard">${x.images.length ? `<div class="cimgs">${x.images.map((u, k) => `<img class="${k ? '' : 'big'}" src="${esc(u)}" alt="">`).join('')}</div>` : ''}<b class="ccname">${esc(x.name)}</b>${(x.kw || []).some(k => k.k && k.v) ? `${x.note ? `<div class="md">${miniMd(x.note)}</div>` : ''}<div class="basics">${x.kw.filter(k => k.k && k.v).map(k => `<div class="bi"><b>${esc(k.k)}</b><p>${inlineMd(k.v)}</p></div>`).join('')}</div>` : x.desc ? `<div class="md">${miniMd(x.desc)}</div>` : ''}</div>`).join('')}</section>`);
     if (p.lore.some(l => l.keys.length)) secs.push(`<section class="ds"><h3>설정집 <span class="qmark" title="키워드가 대화에 나오면 AI가 이 설정을 참고해요">?</span></h3>${p.lore.filter(l => l.keys.length).map(l => `<div class="lcard"><b>${esc(l.keys.join(' · '))}</b><span>이 키워드가 나오면 AI가 설정을 참고해요</span></div>`).join('')}</section>`);
     if (p.intro.length) secs.push(`<section class="ds"><h3>인트로</h3><div class="dscene">${p.intro.map(line).join('')}</div></section>`);
     if (p.showExamples && p.examples.length) secs.push(`<section class="ds"><h3>상황 예시</h3><div class="dscene">${p.examples.map(x => line({ type: x.who === 'user' ? 'user' : 'char', ci: x.who === 'user' ? 0 : x.who, text: x.text })).join('')}</div></section>`);
-    if (p.commentOn && p.comment) secs.push(`<section class="ds"><h3>크리에이터 코멘트</h3><p>${esc(p.comment)}</p></section>`);
+    if (p.commentOn && p.comment) secs.push(`<section class="ds"><h3>크리에이터 코멘트</h3><p>${inlineMd(p.comment)}</p></section>`);
   } else {
-    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${c.basics && c.basics.avatar ? `<img src="${esc(c.basics.avatar)}" alt="${esc(c.name)}">` : pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}</div></section>`,
-      `<section class="ds"><h3>인트로</h3><div class="dscene"><div class="dl char"><span class="dav">${pic(c, 'ia')}</span><div><small>${esc(c.name)}</small><p>${esc(c.greet)}</p></div></div></div></section>`);
+    secs.push(`<section class="ds"><h3>소개</h3><p>${inlineMd([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${c.basics && c.basics.avatar ? `<img src="${esc(c.basics.avatar)}" alt="${esc(c.name)}">` : pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}</div></section>`,
+      `<section class="ds"><h3>인트로</h3><div class="dscene"><div class="dl char"><span class="dav">${pic(c, 'ia')}</span><div><small>${esc(c.name)}</small><p>${inlineMd(c.greet)}</p></div></div></div></section>`);
   }
   const personas = p && p.personas.filter(x => x.name).length, lore = p && p.lore.some(l => l.keys.length);
   const byline = c.official ? `<div class="byline"><span class="bav logo-b">C</span><span class="bl"><b>Comma</b><small>공식 오리지널</small></span></div>`
@@ -2403,7 +2435,7 @@ function detailHTML(c, preview, coverView) {
   return `<div class="detail${preview ? ' pv' : ''}" role="dialog" aria-label="${esc(c.name)} 상세" id="detailScroll">${topbar}<div class="d-wrap">
     <div class="d-hero">${hero}${preview ? '' : `<button class="hfav ${fav ? 'on' : ''}" data-fav="${c.id}" aria-label="찜" aria-pressed="${fav}">${I.heart}<span>${fmt(c.stats.favs)}</span></button>`}</div>
     ${covers && covers.length > 1 ? `<div class="thumbs" role="tablist" aria-label="커버 이미지">${covers.map((u, k) => `<button class="${k ? '' : 'on'}" data-cover="${k}" aria-label="커버 ${k + 1}"><img src="${esc(u)}" alt=""></button>`).join('')}</div>` : ''}
-    <div class="d-head"><h2>${esc(c.name)}</h2>${c.tl ? `<p class="tl">${esc(c.tl)}</p>` : ''}${c.tags.length ? `<p class="dtags">${c.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}
+    <div class="d-head"><h2>${esc(c.name)}</h2>${c.tl ? `<p class="tl">${inlineMd(c.tl)}</p>` : ''}${c.tags.length ? `<p class="dtags">${c.tags.map(t => '#' + esc(t)).join(' ')}</p>` : ''}
       <div class="dchips"><span class="dchip">${I.bubble}${fmt(c.stats.msgs)}</span>${!preview && c.dbId && c.allowComments ? `<button class="dchip" data-gocmts>${I.bubble.replace('class="ico"', 'class="ico" style="fill:currentColor"')}<span>댓글 ${fmt(c.stats.comments || 0)}</span></button>` : ''}${personas ? `<button class="dchip" data-personas="${esc(c.id)}">${I.user}추천 대화 프로필</button>` : ''}${lore ? `<span class="dchip">${I.book}설정집</span>` : ''}<span class="dchip soft">${esc(c.cat)}</span></div></div>
     <div class="dsep"></div>${byline}
     ${secs.join('<div class="dsep"></div>')}
