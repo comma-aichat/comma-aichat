@@ -26,7 +26,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .app{max-width:720px;margin:0 auto;min-height:100vh;padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 24px)}
 
 /* per-tab header */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:6px;min-height:60px;padding:8px 16px;background:rgba(14,13,16,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:rgba(14,13,16,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+#top:empty{display:none}
+.top{position:relative;z-index:20;display:flex;align-items:center;gap:6px;min-height:60px;padding:8px 16px;background:rgba(14,13,16,.9);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .top h1{margin:0;font-family:var(--f-head);font-weight:800;font-size:23px;letter-spacing:-.02em}
 .htabs{display:flex;gap:16px;align-items:baseline}
 .htabs a{font-family:var(--f-head);font-weight:800;font-size:23px;letter-spacing:-.02em;color:var(--text3);transition:color .2s}
@@ -1420,7 +1422,7 @@ function chatHeader() {
   const c = C.char, persona = C.conv.persona;
   return C.selMode
     ? `<header class="top chattop"><button class="iconbtn" data-selcancel aria-label="취소">${I.close}</button><h1 style="font-size:18px">지울 메시지 선택</h1></header>`
-    : `<header class="top chattop"><a class="iconbtn" href="#chats" aria-label="뒤로">${I.back}</a><a class="ctitle" href="#c-${c.id}"><span class="bav">${chatAvatar(0)}</span><span class="bl"><b>${esc(c.name)}</b>${persona && persona.name ? `<small>${esc(persona.name)}(으)로 대화 중</small>` : ''}</span></a><span class="sp"></span><button class="iconbtn" data-chatmenu aria-label="대화 설정">${I.menu}</button></header>`;
+    : `<header class="top chattop"><a class="iconbtn" href="#chats" aria-label="뒤로">${I.back}</a><a class="ctitle" href="#c-${c.id}"><span class="bav">${chatAvatar(0)}</span><span class="bl"><b>${esc(c.name)}</b>${persona && persona.name ? `<small>${esc(subNames('{{user}}로', { user: persona.name }))} 대화 중</small>` : ''}</span></a><span class="sp"></span><button class="iconbtn" data-chatmenu aria-label="대화 설정">${I.menu}</button></header>`;
 }
 function renderChat(scroll) {
   NAMES = { user: (C.conv && C.conv.persona && C.conv.persona.name) || (S.profile && S.profile.nickname) || '당신', char: mainName() };
@@ -1567,7 +1569,7 @@ async function setPersona(key) {
   const { error } = await sb.from('conversations').update({ persona }).eq('id', C.id).eq('user_id', S.user.id);
   if (error) { toast('바꾸지 못했어요'); return; }
   C.conv.persona = persona; const v = (S.convs || []).find(x => x.id === C.id); if (v) v.persona = persona;
-  closeSheet(); renderChat(false); toast(`${p.name}(으)로 대화해요`);
+  closeSheet(); renderChat(false); toast(`${subNames('{{user}}로', { user: p.name })} 대화해요`);
 }
 async function uploadPersonaImg(file) {
   if (!file) return;
