@@ -455,6 +455,7 @@ body.editing .app{padding-bottom:40px}
 .dl p i{color:var(--text2)}
 .sms{display:inline-block;max-width:100%;margin:3px 0;padding:7px 13px;border-radius:16px 16px 4px 16px;background:var(--pink);color:#fff;font-style:normal;line-height:1.45;white-space:pre-line;box-shadow:0 4px 14px var(--glow)}
 .sms b,.sms i{color:#fff}
+.tsec{display:block;margin-top:6px;color:var(--text3);font-size:12.5px}
 .dl.user .sms{background:#3a3640;box-shadow:none}
 s{text-decoration:line-through;text-decoration-thickness:1.5px;opacity:.75}
 .dn p .sms,.cn .sms,.dl p i .sms{font-style:normal}
@@ -1395,6 +1396,9 @@ async function startChat(c, fresh) {
     <p class="sub">캐릭터들이 나를 이 인물로 대해요. 대화 중에도 오른쪽 위 메뉴에서 바꿀 수 있어요.</p>
     ${window.__pickList.map(row).join('')}</div>`;
 }
+/* while the AI is still thinking, show how long it has been so the wait feels alive */
+const typingLabel = () => { const sec = C.t0 ? Math.floor((Date.now() - C.t0) / 1000) : 0; return sec < 3 ? '답장을 쓰는 중…' : sec < 15 ? `생각하는 중… ${sec}초` : `조금 오래 걸리고 있어요… ${sec}초`; };
+setInterval(() => { const el = document.getElementById('typingSec'); if (el && C.sending && !C.streamText) el.textContent = typingLabel(); }, 1000);
 let creatingConv = false;
 async function createConv(c, persona) {
   closeSheet(); if (creatingConv) return; creatingConv = true; toast('대화를 준비하는 중…');
@@ -1439,7 +1443,7 @@ function introHTML() {
 }
 const mainName = () => { const c = C.char; return (c.plot && c.plot.chars[0] && c.plot.chars[0].name) || c.name; };
 function msgHTML(m, last, lastUser) {
-  if (C.sending && C.regenId === m.id) return `<div class="dl char" id="streaming"><span class="dav">${chatAvatar(0)}</span><div><small>${esc(mainName())}</small><p>${C.streamText ? inlineMd(C.streamText) : '<span class="typing"><i></i><i></i><i></i></span>'}</p></div></div>`;
+  if (C.sending && C.regenId === m.id) return `<div class="dl char" id="streaming"><span class="dav">${chatAvatar(0)}</span><div><small>${esc(mainName())}</small><p>${C.streamText ? inlineMd(C.streamText) : '<span class="typing"><i></i><i></i><i></i></span><small class="tsec" id="typingSec">' + typingLabel() + '</small>'}</p></div></div>`;
   if (C.editId === m.id && !C.selMode) return `<div class="dl user editing"><div class="medit"><textarea id="editIn" rows="3" maxlength="2000">${esc(window.__editDraft != null ? window.__editDraft : m.content)}</textarea><div class="macts end"><button class="mini" data-editcancel>취소</button><button class="savebtn" data-editsend="${m.id}">수정해서 다시 받기</button></div></div></div>`;
   const sel = C.selMode ? `<span class="selbox ${C.sel.has(m.id) ? 'on' : ''}" aria-hidden="true">${C.sel.has(m.id) ? '✓' : ''}</span>` : '';
   const attrs = `data-mid="${m.id}" ${C.selMode ? `data-pickmsg="${m.id}" role="checkbox" aria-checked="${C.sel.has(m.id)}" tabindex="0"` : ''}`;
@@ -1468,7 +1472,7 @@ function renderChat(scroll) {
     ${C.loading ? '<div class="typing"><i></i><i></i><i></i></div>' : ''}
     <div class="dscene" id="msgs">${C.msgs.map(m => msgHTML(m, lastIsA && m === lastA && !C.sending, m === lastU)).join('')}
       ${C.selMode && !C.msgs.length ? '<div class="cerr soft">지울 메시지가 없어요.</div>' : ''}
-      ${C.sending && !C.regenId ? `<div class="dl char" id="streaming"><span class="dav">${chatAvatar(0)}</span><div><small>${esc(mainName())}</small><p>${C.streamText ? inlineMd(C.streamText) : '<span class="typing"><i></i><i></i><i></i></span>'}</p></div></div>` : ''}
+      ${C.sending && !C.regenId ? `<div class="dl char" id="streaming"><span class="dav">${chatAvatar(0)}</span><div><small>${esc(mainName())}</small><p>${C.streamText ? inlineMd(C.streamText) : '<span class="typing"><i></i><i></i><i></i></span><small class="tsec" id="typingSec">' + typingLabel() + '</small>'}</p></div></div>` : ''}
       ${C.err && !C.selMode ? `<div class="cerr">${esc(C.err)}${needRegen ? ' <button class="mini" data-regen>다시 생성</button>' : ''}</div>` : needRegen ? '<div class="cerr soft">답장이 없어요. <button class="mini" data-regen>답장 받기</button></div>' : ''}
     </div></div>
   ${C.selMode ? `<div class="cbar selbar"><span class="selcount">${C.sel.size}개 선택</span><span class="sp"></span><button class="mini" data-selrest ${C.sel.size ? '' : 'disabled'}>여기부터 끝까지</button><button class="edbtn" data-selcancel>취소</button><button class="edbtn pri danger" data-seldel ${C.sel.size ? '' : 'aria-disabled="true"'}>삭제</button></div>`
@@ -1479,7 +1483,7 @@ function renderChat(scroll) {
 function autoGrow(e) { const t = e.target; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 140) + 'px'; window.__chatDraft = t.value; }
 async function sendChat(text, regen, editId) {
   if (C.sending) return;
-  C.sending = true; C.err = ''; C.streamText = ''; C.regenId = null;
+  C.sending = true; C.err = ''; C.streamText = ''; C.regenId = null; C.t0 = Date.now();
   const last = C.msgs[C.msgs.length - 1];
   if (editId) { const ix = C.msgs.findIndex(m => m.id === editId); if (ix >= 0) { C.msgs = C.msgs.slice(0, ix + 1); C.msgs[ix].content = text; } C.editId = null; }
   else if (!regen) { C.msgs.push({ id: 'tmp', role: 'user', content: text }); window.__chatDraft = ''; }

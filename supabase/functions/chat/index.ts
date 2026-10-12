@@ -119,12 +119,15 @@ ${text}`;
   return "";
 }
 
-const FIRST_TOKEN_MS = 20000, IDLE_MS = 30000;
-// Read the first streamed chunk within FIRST_TOKEN_MS; a model that stalls is abandoned for the next one.
-async function openStream(model: string, system: string, contents: any[], lowThinking: boolean) {
-  const ac = new AbortController();
+const FIRST_TOKEN_MS = 25000, IDLE_MS = 30000;
+// thinking settings tried from fastest to none; a model that rejects one (400) gets the next
+const THINKING: (Record<string, unknown> | null)[] = [{ thinkingBudget: 0 }, { thinkingLevel: "minimal" }, { thinkingLevel: "low" }, null];
+const okThinking = new Map<string, number>(); // model -> index into THINKING that worked last time
+// Opens a stream and waits until real reply text starts (thinking can take long); a model that stalls is abandoned.
+async function openStream(model: string, system: string, contents: any[], ti: number) {
+  const ac = new AbortController(), t0 = Date.now();
   const generationConfig: any = { temperature: 0.95, topP: 0.95, maxOutputTokens: 2048 };
-  if (lowThinking) generationConfig.thinkingConfig = { thinkingLevel: "low" };
+  if (THINKING[ti]) generationConfig.thinkingConfig = THINKING[ti];
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, {
     method: "POST", signal: ac.signal,
     headers: { "content-type": "application/json", "x-goog-api-key": GEMINI_KEY },
@@ -136,17 +139,21 @@ async function openStream(model: string, system: string, contents: any[], lowThi
     }),
   });
   if (!r.ok || !r.body) return { ok: false as const, status: r.status, text: (await r.text()).slice(0, 300) };
-  const reader = r.body.getReader();
-  let timer: number | undefined;
-  const first = await Promise.race([
-    reader.read(),
-    new Promise<null>((res) => { timer = setTimeout(() => res(null), FIRST_TOKEN_MS); }),
-  ]);
-  clearTimeout(timer);
-  if (!first) { ac.abort(); return { ok: false as const, status: 504, text: "first token timeout" }; }
-  // hand back a stream that replays the first chunk, then the rest, giving up if it goes quiet for IDLE_MS
+  const reader = r.body.getReader(), dec = new TextDecoder();
+  const held: Uint8Array[] = []; let seen = "", ended = false;
+  const deadline = t0 + FIRST_TOKEN_MS;
+  while (!/"text"\s*:/.test(seen) && !/finishReason|blockReason/.test(seen)) {
+    let timer: number | undefined;
+    const next = await Promise.race([reader.read(), new Promise<null>((res) => { timer = setTimeout(() => res(null), Math.max(0, deadline - Date.now())); })]);
+    clearTimeout(timer);
+    if (!next) { ac.abort(); return { ok: false as const, status: 504, text: "first token timeout" }; }
+    if (next.done) { ended = true; break; }
+    held.push(next.value); seen += dec.decode(next.value, { stream: true });
+  }
+  console.log("first text", model, JSON.stringify(THINKING[ti]), Date.now() - t0, "ms");
+  // replay what was read, then the rest, giving up if it goes quiet for IDLE_MS
   const body = new ReadableStream<Uint8Array>({
-    start(ctrl) { if (first.value) ctrl.enqueue(first.value); if (first.done) ctrl.close(); },
+    start(ctrl) { for (const h of held) ctrl.enqueue(h); if (ended) ctrl.close(); },
     async pull(ctrl) {
       let t: number | undefined;
       const next = await Promise.race([reader.read(), new Promise<null>((res) => { t = setTimeout(() => res(null), IDLE_MS); })]);
@@ -163,13 +170,16 @@ async function openStream(model: string, system: string, contents: any[], lowThi
 async function callGemini(system: string, contents: any[]) {
   let last = "";
   for (const model of MODELS) {
-    let res = await openStream(model, system, contents, true).catch((e) => ({ ok: false as const, status: 0, text: String(e) }));
-    // a model that does not take the thinking setting gets one plain retry
-    if (!res.ok && res.status === 400 && /thinking/i.test(res.text)) res = await openStream(model, system, contents, false).catch((e) => ({ ok: false as const, status: 0, text: String(e) }));
-    if (res.ok) return { body: res.body };
-    last = `${model} ${res.status} ${res.text}`;
+    let res: any = null;
+    for (let ti = okThinking.get(model) ?? 0; ti < THINKING.length; ti++) {
+      res = await openStream(model, system, contents, ti).catch((e) => ({ ok: false as const, status: 0, text: String(e) }));
+      if (res.ok) { okThinking.set(model, ti); break; }
+      if (!(res.status === 400 && /thinking/i.test(res.text))) break; // only a rejected thinking setting moves on
+    }
+    if (res && res.ok) return { body: res.body };
+    last = `${model} ${res && res.status} ${res && res.text}`;
     console.error("gemini failed", last);
-    if (![0, 404, 429, 500, 503, 504].includes(res.status)) break;
+    if (![0, 404, 429, 500, 503, 504].includes(res && res.status)) break;
   }
   throw new Error(last);
 }
