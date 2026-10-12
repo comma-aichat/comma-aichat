@@ -522,6 +522,36 @@ body.chatting .app{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
 .drsep{height:1px;margin:10px 8px;background:var(--line2)}
 .drexit{display:flex;align-items:center;gap:10px;padding:18px 22px calc(env(safe-area-inset-bottom,0px) + 18px);border-top:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--text2);font-size:16px;text-align:left}
 .drexit .ico{width:22px;height:22px}
+.cvcount{margin:10px 22px 0;color:var(--text3);font-size:14px;text-align:center}
+.cvlist{gap:0}
+.cvrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:4px;padding:12px 6px;border-bottom:1px solid var(--line)}
+.cvrow.on .cvmain b{color:var(--pink2)}
+.cvmain{display:grid;gap:4px;min-width:0}
+.cvmain b{font-weight:600;font-size:15.5px;overflow-wrap:anywhere}
+.cvmain b em{display:block;font-style:normal;color:var(--pink2);font-size:12px;font-weight:500;margin-top:2px}
+.cvmain span{color:var(--text3);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cvmain span i{font-style:normal;margin-right:8px;padding-right:8px;border-right:1px solid var(--line2)}
+.cvacts{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:8px}
+.cvacts span{flex-basis:100%;color:var(--text2);font-size:13.5px}
+.cvacts .edbtn{display:inline-flex;align-items:center;gap:4px}
+.cvacts .edbtn .ico{width:16px;height:16px}
+.cvacts .edbtn{background:var(--card2);color:var(--text)}
+.cvacts .edbtn.danger{background:rgba(229,72,77,.16);color:#ff7a7f}
+.cvren{grid-column:1/-1;display:flex;gap:6px;align-items:center}
+.cvren input{flex:1;min-width:0;height:42px;padding:0 12px;border-radius:12px;background:var(--card);border:1px solid var(--pink);color:var(--text);font:inherit;font-size:16px;outline:0}
+.ncbox{position:fixed;z-index:92;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100vw - 32px));display:grid;gap:14px;justify-items:center;padding:26px 20px 20px;border-radius:24px;background:var(--bg2);border:1px solid var(--line2);text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.ncbox h2{margin:0;font-family:var(--f-head);font-weight:800;font-size:20px}
+.ncbox p{margin:0;color:var(--text2);font-size:14.5px;line-height:1.55}
+.nccheck{display:inline-flex;align-items:center;gap:10px;font-weight:600;font-size:15.5px;cursor:pointer;margin-top:4px}
+.nccheck input{position:absolute;opacity:0;width:1px;height:1px}
+.ncbox-c{width:24px;height:24px;border-radius:7px;border:2px solid var(--line2);display:grid;place-items:center;color:#fff}
+.ncbox-c .ico{width:15px;height:15px;stroke-width:3;opacity:0}
+.nccheck input:checked+.ncbox-c{background:var(--pink);border-color:var(--pink)}
+.nccheck input:checked+.ncbox-c .ico{opacity:1}
+.nccheck input:focus-visible+.ncbox-c{outline:2px solid var(--pink);outline-offset:2px}
+.ncname{width:100%;height:46px;padding:0 14px;border-radius:12px;background:var(--card);border:1px solid var(--line2);color:var(--text);font:inherit;font-size:16px;outline:0;box-sizing:border-box}
+.ncname:focus{border-color:rgba(255,79,154,.6)}
+.ncbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;margin-top:4px}
 .drconv{display:grid;gap:3px;padding:14px 12px;border-radius:14px;background:var(--card);margin-bottom:8px}
 .drconv.on{outline:1.5px solid var(--pink)}
 .drconv b{font-weight:700}
@@ -1330,7 +1360,7 @@ async function chatFetch(body, signal) {
 }
 async function loadConvs() {
   if (!S.user) { S.convs = null; return; }
-  const { data, error } = await sb.from('conversations').select('id,character_id,last_message,message_count,updated_at,created_at,persona,characters(id,slug,name,tagline,image_url,images,art,plot,is_official,owner_id,category,tags,greeting,intro,personality,speech,world,chat_count,message_count,favorite_count,is_public,status)').eq('user_id', S.user.id).order('updated_at', { ascending: false }).limit(100);
+  const { data, error } = await sb.from('conversations').select('id,character_id,title,last_message,message_count,updated_at,created_at,persona,characters(id,slug,name,tagline,image_url,images,art,plot,is_official,owner_id,category,tags,greeting,intro,personality,speech,world,chat_count,message_count,favorite_count,is_public,status)').eq('user_id', S.user.id).order('updated_at', { ascending: false }).limit(100);
   S.convs = error ? [] : data.filter(r => r.characters).map(r => Object.assign(r, { c: fromRow(r.characters) }));
 }
 async function loadPersonas() {
@@ -1519,6 +1549,48 @@ async function pickAlt(k) {
   if (error) { Object.assign(m, prev); renderChat(false); toast('답장을 바꾸지 못했어요'); }
 }
 
+/* ---- saved conversations: titles, new chat ---- */
+const pad2 = n => String(n).padStart(2, '0');
+const stamp = t => { const d = new Date(t); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const convTitle = v => (v.title && v.title.trim()) || `${stamp(v.updated_at || v.created_at)}에 저장된 대화`;
+function openNewChat() {
+  document.body.classList.add('sheet-open');
+  const def = `${stamp(Date.now())}에 저장된 대화`;
+  $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="ncbox" role="dialog" aria-label="대화를 새로 시작할까요?">
+    <h2>대화를 새로 시작할까요?</h2><p>저장한 대화는 '이어 하기'에서<br>언제든 다시 할 수 있어요</p>
+    <label class="nccheck"><input type="checkbox" id="ncSave" checked><span class="ncbox-c">${I.check}</span>현재 대화 저장하기</label>
+    <input class="ncname" id="ncName" maxlength="40" placeholder="${esc(def)}" aria-label="저장할 대화 제목">
+    <div class="ncbtns"><button class="btn sec2" data-close>취소</button><button class="btn" data-ncok>확인</button></div></div>`;
+  const cb = $('#ncSave'), nm = $('#ncName');
+  cb.addEventListener('change', () => { nm.hidden = !cb.checked; });
+}
+async function confirmNewChat() {
+  const save = $('#ncSave').checked, name = ($('#ncName').value || '').trim();
+  const id = C.id, c = C.char; closeSheet();
+  if (save) {
+    const title = name || `${stamp(Date.now())}에 저장된 대화`;
+    const { error } = await sb.from('conversations').update({ title }).eq('id', id).eq('user_id', S.user.id);
+    if (error) { toast('저장하지 못했어요'); return; }
+    toast('이어 하기에 저장했어요');
+  } else {
+    await sb.from('conversations').delete().eq('id', id).eq('user_id', S.user.id);
+  }
+  await loadConvs(); startChat(c, true);
+}
+async function renameConv(id) {
+  const v = (S.convs || []).find(x => x.id === id), inp = $('#cvren-' + id); if (!v || !inp) return;
+  const title = inp.value.trim().slice(0, 40) || null;
+  const { error } = await sb.from('conversations').update({ title }).eq('id', id).eq('user_id', S.user.id);
+  if (error) { toast('제목을 바꾸지 못했어요'); return; }
+  v.title = title; DR.rename = null; DR.menu = null; openDrawer('resume'); toast('제목을 바꿨어요');
+}
+async function deleteConv(id) {
+  const { error } = await sb.from('conversations').delete().eq('id', id).eq('user_id', S.user.id);
+  if (error) { toast('지우지 못했어요'); return; }
+  DR.menu = null; DR.del = null; await loadConvs(); toast('대화를 지웠어요');
+  if (id === C.id) { closeSheet(); const next = (S.convs || []).find(x => x.character_id === C.char.dbId); location.hash = next ? '#chat-' + next.id : '#c-' + C.char.id; return; }
+  openDrawer('resume');
+}
 /* ---- right-side drawer ---- */
 const DR = { page: 'main', edit: null, img: null };
 function openDrawer(page) {
@@ -1529,15 +1601,20 @@ function openDrawer(page) {
   if (DR.page === 'main') {
     const p = C.conv.persona;
     body = `<div class="drbody">
-      <button class="dri" data-newchat><b>새로 하기</b><small>지금 대화는 그대로 두고 처음부터 다시 시작해요</small></button>
+      <button class="dri" data-newchat><b>새로 하기</b><small>처음 장면부터 다시 시작해요</small></button>
       <button class="dri" data-drpage="resume"><b>이어 하기</b>${I.down.replace('class="ico"', 'class="ico chev"')}</button>
       <button class="dri" data-selstart><b>대화 삭제</b><small>지울 메시지를 골라서 삭제해요</small></button>
       <button class="dri" data-drpage="persona"><b>대화 프로필</b><span class="drv">${esc((p && p.name) || '없음')}</span>${I.down.replace('class="ico"', 'class="ico chev"')}</button>
     </div>
     <button class="drexit" data-leavechat>${I.out}대화방 나가기</button>`;
   } else if (DR.page === 'resume') {
-    const list = (S.convs || []).filter(v => v.character_id === C.char.dbId);
-    body = `<div class="drhead">${back}<h3>이어 하기</h3></div><div class="drbody">${list.map((v, i) => `<a class="drconv ${v.id === C.id ? 'on' : ''}" href="#chat-${v.id}" data-close><b>대화 ${list.length - i}${v.id === C.id ? ' <em>지금 보는 대화</em>' : ''}</b><span>${esc((v.last_message || '아직 메시지가 없어요').replace(/\*/g, ''))}</span><small>${ago(v.updated_at)} · 메시지 ${v.message_count}개${v.persona && v.persona.name ? ' · ' + esc(v.persona.name) : ''}</small></a>`).join('')}</div>`;
+    const list = (S.convs || []).filter(v => v.character_id === C.char.dbId).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+    body = `<div class="drhead">${back}<h3>이어 하기</h3></div><p class="cvcount">${list.length}개</p><div class="drbody cvlist">${list.map(v => {
+      const on = v.id === C.id, menu = DR.menu === v.id, ren = DR.rename === v.id, del = DR.del === v.id;
+      return `<div class="cvrow ${on ? 'on' : ''}">${ren ? `<form class="cvren" data-cvrenform="${v.id}"><input id="cvren-${v.id}" maxlength="40" value="${esc(convTitle(v))}" aria-label="대화 제목"><button class="edbtn pri" type="submit">저장</button><button class="edbtn" type="button" data-cvcancel>취소</button></form>`
+        : `<a class="cvmain" href="#chat-${v.id}" data-close><b>${esc(convTitle(v))}${on ? ' <em>지금 보는 대화</em>' : ''}</b><span><i>${ago(v.updated_at)}</i>${esc((v.last_message || '아직 메시지가 없어요').replace(/\*/g, ''))}</span></a><button class="iconbtn sm" data-cvmenu="${v.id}" aria-label="더보기">${I.dots}</button>`}
+        ${menu && !ren ? `<div class="cvacts">${del ? `<span>이 대화를 지울까요? 되돌릴 수 없어요.</span><button class="edbtn" data-cvmenu="${v.id}">취소</button><button class="edbtn danger" data-cvdelok="${v.id}">삭제</button>` : `<button class="edbtn" data-cvrename="${v.id}">${I.pen}제목 수정</button><button class="edbtn danger" data-cvdel="${v.id}">대화 삭제</button>`}</div>` : ''}</div>`;
+    }).join('')}</div>`;
   } else if (DR.page === 'persona') {
     const o = personaOptions(C.char), cur = C.conv.persona || {};
     const row = (p, key) => `<div class="prow2 ${cur.name === p.name && (cur.desc || '') === (p.desc || '') ? 'on' : ''}"><button class="pick" data-setpersona="${key}"><span class="bav">${personaAv(p)}</span><span class="bl"><b>${esc(p.name)}</b><small>${esc((p.desc || '설명 없음').slice(0, 70))}</small></span></button>${p.src === 'mine' ? `<button class="iconbtn sm" data-editpersona="${p.pid}" aria-label="수정">${I.pen}</button>` : ''}</div>`;
@@ -1609,7 +1686,7 @@ function confirmLeave() {
   $('#sheet').innerHTML = `<div class="scrim" data-close></div><div class="sheet"><div class="grab"></div><h2>대화방을 나갈까요?</h2><p class="sub">이 대화방의 메시지가 모두 사라지고 되돌릴 수 없어요.</p>
     <button class="btn" style="background:#e5484d;box-shadow:none" data-leaveok>나가기</button><button class="btn sec2" data-close>취소</button></div>`;
 }
-document.addEventListener('submit', e => { if (e.target.id === 'chatForm') { e.preventDefault(); const t = $('#chatIn').value.trim(); if (t) sendChat(t, false); } });
+document.addEventListener('submit', e => { if (e.target.dataset && e.target.dataset.cvrenform) { e.preventDefault(); renameConv(e.target.dataset.cvrenform); return; } if (e.target.id === 'chatForm') { e.preventDefault(); const t = $('#chatIn').value.trim(); if (t) sendChat(t, false); } });
 document.addEventListener('keydown', e => { if (e.target.id === 'chatIn' && e.key === 'Enter' && !e.shiftKey && !e.isComposing && matchMedia('(hover:hover)').matches) { e.preventDefault(); const t = e.target.value.trim(); if (t) sendChat(t, false); } });
 document.addEventListener('click', async e => {
   const t = e.target; let m;
@@ -1622,7 +1699,13 @@ document.addEventListener('click', async e => {
   if ((m = t.closest('[data-editsend]'))) { const v = $('#editIn').value.trim(); window.__editDraft = null; if (v) sendChat(v, false, +m.dataset.editsend); return; }
   if (t.closest('[data-chatmenu]')) { if (!S.personas) await loadPersonas(); openDrawer('main'); return; }
   if ((m = t.closest('[data-drpage]'))) { DR.edit = null; DR.img = null; openDrawer(m.dataset.drpage); return; }
-  if (t.closest('[data-newchat]')) { closeSheet(); startChat(C.char, true); return; }
+  if (t.closest('[data-newchat]')) { closeSheet(); setTimeout(openNewChat, 10); return; }
+  if (t.closest('[data-ncok]')) { confirmNewChat(); return; }
+  if ((m = t.closest('[data-cvmenu]'))) { const id = m.dataset.cvmenu; DR.menu = DR.menu === id && !DR.del ? null : id; DR.del = null; DR.rename = null; openDrawer('resume'); return; }
+  if ((m = t.closest('[data-cvrename]'))) { DR.rename = m.dataset.cvrename; openDrawer('resume'); const i = $('#cvren-' + DR.rename); if (i) { i.focus(); i.select(); } return; }
+  if (t.closest('[data-cvcancel]')) { DR.rename = null; DR.menu = null; openDrawer('resume'); return; }
+  if ((m = t.closest('[data-cvdel]'))) { DR.del = m.dataset.cvdel; openDrawer('resume'); return; }
+  if ((m = t.closest('[data-cvdelok]'))) { deleteConv(m.dataset.cvdelok); return; }
   if ((m = t.closest('[data-setpersona]'))) { setPersona(m.dataset.setpersona); return; }
   if ((m = t.closest('[data-editpersona]'))) { const id = m.dataset.editpersona; DR.edit = id === 'new' ? null : (S.personas || []).find(p => p.id === id) || null; DR.img = null; openDrawer('pform'); return; }
   if ((m = t.closest('[data-delpersona]'))) { deletePersona(m.dataset.delpersona); return; }
