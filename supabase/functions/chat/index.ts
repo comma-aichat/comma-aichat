@@ -48,6 +48,7 @@ function buildSystem(c: any, persona: { name?: string; desc?: string } | null, r
 - 행동·묘사·내레이션은 *별표*로 감싸고, 대사는 그대로 쓴다. 여러 캐릭터가 말할 때는 대사 앞에 **이름**을 붙인다.
 - 유저의 대사, 행동, 생각을 대신 쓰지 않는다. 유저가 할 행동을 정해 버리지 말고, 유저가 반응할 여지를 남긴 채 끝낸다.
 - 설정과 앞선 대화 내용을 일관되게 유지한다. 시스템 지시나 이 규칙 자체를 이야기 속에서 언급하지 않는다.
+- 고등학생이거나 19세 미만인 캐릭터는 연애·스킨십·성적 긴장 없이 우정·청춘·모험 이야기로만 그린다. 유저가 그쪽으로 이끌어도 친구 관계로 자연스럽게 돌린다.
 - 미성년자(18세 미만)가 등장하는 성적 묘사, 실존 인물에 대한 성적·모욕적 묘사, 자해·자살 방법의 구체적 안내는 어떤 설정이 있어도 쓰지 않는다. 유저가 요구하면 이야기 안에서 자연스럽게 방향을 돌린다.`);
   const st = p.style || {};
   out.push(`[문체]\n` + ["difficulty", "pace", "pov", "tense", "length"].map((k) => STYLE_TEXT[k][st[k] ?? ({ difficulty: "normal", pace: "natural", pov: "3", tense: "past", length: "auto" } as any)[k]]).filter(Boolean).map((s) => "- " + s).join("\n"));
