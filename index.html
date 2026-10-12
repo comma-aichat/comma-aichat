@@ -2394,7 +2394,7 @@ function detailHTML(c, preview, coverView) {
     if (p.showExamples && p.examples.length) secs.push(`<section class="ds"><h3>상황 예시</h3><div class="dscene">${p.examples.map(x => line({ type: x.who === 'user' ? 'user' : 'char', ci: x.who === 'user' ? 0 : x.who, text: x.text })).join('')}</div></section>`);
     if (p.commentOn && p.comment) secs.push(`<section class="ds"><h3>크리에이터 코멘트</h3><p>${esc(p.comment)}</p></section>`);
   } else {
-    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}</div></section>`,
+    secs.push(`<section class="ds"><h3>소개</h3><p>${esc([c.intro, c.world].filter(Boolean).join('\n\n'))}</p></section>`, `<section class="ds"><h3>캐릭터</h3><div class="ccard"><div class="cimgs"><span class="big svgimg">${c.basics && c.basics.avatar ? `<img src="${esc(c.basics.avatar)}" alt="${esc(c.name)}">` : pic(c, 'cc')}</span></div><b class="ccname">${esc(c.name)}</b>${basicsHTML(c)}</div></section>`,
       `<section class="ds"><h3>인트로</h3><div class="dscene"><div class="dl char"><span class="dav">${pic(c, 'ia')}</span><div><small>${esc(c.name)}</small><p>${esc(c.greet)}</p></div></div></div></section>`);
   }
   const personas = p && p.personas.filter(x => x.name).length, lore = p && p.lore.some(l => l.keys.length);
