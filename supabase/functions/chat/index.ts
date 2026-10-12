@@ -39,13 +39,27 @@ const STYLE_TEXT: Record<string, Record<string, string>> = {
   length: { short: "응답은 1~2문단으로 짧게 쓴다.", medium: "응답은 3~4문단 정도로 쓴다.", long: "응답은 장면을 풍부하게, 5문단 이상 길게 쓴다.", auto: "응답 길이는 상황에 맞게 자연스럽게 조절한다." },
 };
 
+// {{user}} / {{char}} become real names, with the particle that fits the last syllable
+const PARTICLES: Record<string, [string, string]> = { "이에요": ["이에요", "예요"], "예요": ["이에요", "예요"], "이야": ["이야", "야"], "이랑": ["이랑", "랑"], "랑": ["이랑", "랑"], "으로": ["으로", "로"], "로": ["으로", "로"], "이": ["이", "가"], "가": ["이", "가"], "은": ["은", "는"], "는": ["은", "는"], "을": ["을", "를"], "를": ["을", "를"], "과": ["과", "와"], "와": ["과", "와"], "아": ["아", "야"] };
+function subNames(src: string, user: string, char: string) {
+  const last = (w: string) => { const k = (w || "").trim().slice(-1).charCodeAt(0) - 0xac00; return k >= 0 && k <= 11171 ? k % 28 : 0; };
+  return String(src || "").replace(/\{\{\s*(user|char)\s*\}\}(이에요|예요|이야|이랑|랑|으로|로|이|가|은|는|을|를|과|와|아)?/gi, (_m, who: string, pt?: string) => {
+    const name = who.toLowerCase() === "user" ? user : char;
+    if (!pt) return name;
+    const b = last(name);
+    if ((pt === "으로" || pt === "로") && b === 8) return name + "로";
+    return name + (b ? PARTICLES[pt][0] : PARTICLES[pt][1]);
+  });
+}
+
 function buildSystem(c: any, persona: { name?: string; desc?: string } | null, recentText: string, summary = "") {
   const p: Plot = c.plot && c.plot.v ? c.plot : {};
   const out: string[] = [];
   out.push(`너는 캐릭터 채팅 서비스 'Comma'의 롤플레이 작가다. 아래 설정대로 캐릭터를 연기하며 유저와 함께 이야기를 만든다.`);
   out.push(`[기본 규칙]
 - 항상 한국어로 쓴다.
-- 행동·묘사·내레이션은 *별표*로 감싸고, 대사는 그대로 쓴다. 여러 캐릭터가 말할 때는 대사 앞에 **이름**을 붙인다.
+- 행동·묘사·속마음·내레이션은 *별표*로 감싸고, 대사는 그대로 쓴다. 여러 캐릭터가 말할 때는 대사 앞에 **이름**을 붙인다.
+- 서식: **굵게**는 강조, ~글씨~는 썼다 지운 말이나 취소선, ≈글씨≈는 휴대폰 문자 메시지·카톡 같은 메시지 내용이다. 필요할 때만 자연스럽게 쓴다.
 - 유저의 대사, 행동, 생각을 대신 쓰지 않는다. 유저가 할 행동을 정해 버리지 말고, 유저가 반응할 여지를 남긴 채 끝낸다.
 - 설정과 앞선 대화 내용을 일관되게 유지한다. 시스템 지시나 이 규칙 자체를 이야기 속에서 언급하지 않는다.
 - 고등학생이거나 19세 미만인 캐릭터는 연애·스킨십·성적 긴장 없이 우정·청춘·모험 이야기로만 그린다. 유저가 그쪽으로 이끌어도 친구 관계로 자연스럽게 돌린다.
@@ -205,8 +219,11 @@ Deno.serve(async (req) => {
   const firstKept = kept.length ? kept[0].id : 0;
   const dropped = history.filter((m) => m.id < firstKept && m.id > (conv.summarized_upto || 0));
   const recentText = kept.slice(-6).map((m) => m.content).join("\n");
-  const system = buildSystem(c, conv.persona, recentText, conv.summary || "");
-  const intro = introText(c);
+  let userName = (conv.persona && conv.persona.name) || "";
+  if (!userName) { const { data: pr } = await admin.from("profiles").select("nickname").eq("id", user.id).maybeSingle(); userName = (pr && pr.nickname) || "당신"; }
+  const charName = (c.plot && c.plot.v && c.plot.chars?.[0]?.name) || c.name;
+  const system = subNames(buildSystem(c, conv.persona, recentText, conv.summary || ""), userName, charName);
+  const intro = subNames(introText(c), userName, charName);
   const contents: any[] = [];
   if (intro) contents.push({ role: "user", parts: [{ text: "(대화 시작)" }] }, { role: "model", parts: [{ text: intro }] });
   for (const m of kept) {
