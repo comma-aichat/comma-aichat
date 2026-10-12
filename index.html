@@ -1885,7 +1885,7 @@ const userFirst = (x, y) => (x.official ? 1 : 0) - (y.official ? 1 : 0);
 const store = { get(k, d) { try { const v = localStorage.getItem('comma.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('comma.' + k, JSON.stringify(v)); } catch (e) { } } };
 const BUBBLES = [
   ['basic', '기본', '#26232b', '#f5f2f6', 'rgba(255,79,154,.2)', '#f5f2f6'],
-  ['comma', '콤마', '#26232b', '#f5f2f6', '#ff4f9a', '#ffffff'],
+  ['comma', '컴마', '#26232b', '#f5f2f6', '#ff4f9a', '#ffffff'],
   ['blossom', '벚꽃', '#2a1a22', '#ffe8f1', '#ffd1e3', '#3b1024'],
   ['milk', '우유', '#ffffff', '#141317', '#3a3640', '#ffffff'],
   ['lavender', '라벤더', '#ffffff', '#141317', '#ddd4ff', '#24184f'],
