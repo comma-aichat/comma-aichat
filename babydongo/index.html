@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#bfe3f7">
+<meta property="og:title" content="babydongo">
+<meta property="og:description" content="나만의 작은 쓰레기통">
+<meta property="og:image" content="profile.jpg">
+<link rel="icon" href="profile.jpg">
+<link rel="apple-touch-icon" href="profile.jpg">
+<title>babydongo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+[hidden]{display:none!important}
+:root{
+  color-scheme: light;
+  --sky:#bfe3f7;
+  --sky-dot:#ffffff;
+  --frame:#8fb7cc;
+  --paper:#ffffff;
+  --paper-2:#f3f8fb;
+  --ink:#2c3a44;
+  --muted:#7a8c97;
+  --blue:#1e96e0;
+  --blue-deep:#1478c0;
+  --blue-soft:#e3f3fd;
+  --line:#d7e6ee;
+  --font:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background-color:var(--sky);
+  background-image:radial-gradient(var(--sky-dot) 1.6px, transparent 1.8px);
+  background-size:14px 14px;
+  color:var(--ink);
+  font-family:var(--font);
+  font-size:15px;
+  line-height:1.55;
+  letter-spacing:-0.01em;
+  word-break:keep-all;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-top:calc(20px + env(safe-area-inset-top, 0px));
+  padding-bottom:calc(36px + env(safe-area-inset-bottom, 0px));
+}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+
+.counter{
+  display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-size:12px;color:var(--ink);padding:0 6px;
+}
+.counter b{color:var(--blue-deep);font-weight:700}
+.counter .url{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+.frame{
+  background:var(--paper-2);
+  border:2px solid var(--frame);
+  border-radius:14px;
+  padding:10px;
+  box-shadow:0 3px 0 var(--frame);
+}
+.inner{
+  background:var(--paper);
+  border:1px dashed var(--frame);
+  border-radius:10px;
+  padding:16px 14px 18px;
+  display:flex;flex-direction:column;gap:14px;
+}
+
+.profile{display:flex;gap:14px;align-items:center}
+.avatar{
+  width:72px;height:72px;flex:none;border-radius:12px;
+  object-fit:cover;display:block;
+  border:2px solid var(--line);
+}
+.profile-text{min-width:0}
+.profile h1{
+  margin:0;font-weight:800;
+  font-size:clamp(21px,5.6vw,28px);line-height:1.25;letter-spacing:-0.03em;
+  color:var(--ink);
+}
+.profile h1 .nw{white-space:nowrap}
+.profile h1 .heart{
+  display:inline-block;width:.78em;height:.78em;margin-left:.12em;
+  vertical-align:-0.04em;
+}
+.count{margin:3px 0 0;font-size:14px;color:var(--muted)}
+.count b{color:var(--blue-deep);font-weight:700}
+
+.bgm{
+  display:flex;align-items:center;gap:8px;
+  background:var(--ink);color:#e9f6ff;
+  border-radius:6px;padding:6px 10px;
+  font-size:12px;overflow:hidden;
+}
+.bgm .tag{flex:none;color:#7cc8f5;font-weight:700}
+.bgm .track{overflow:hidden;white-space:nowrap;min-width:0;flex:1}
+.bgm .track span{display:inline-block;padding-left:100%;animation:tick 14s linear infinite}
+@keyframes tick{to{transform:translateX(-100%)}}
+
+.search{position:relative}
+.search label{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none}
+.search input{
+  width:100%;font-family:var(--font);
+  font-size:16px; /* 16px stops iPhone from zooming on focus */
+  padding:10px 12px 10px 36px;
+  border:2px solid var(--frame);border-radius:10px;
+  background:var(--paper);color:var(--ink);
+  -webkit-appearance:none;appearance:none;
+}
+.search input::placeholder{color:var(--muted)}
+.search input:focus-visible,.card:focus-visible{outline:2px dashed var(--blue);outline-offset:2px}
+
+.section-title{
+  display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:2px solid var(--blue);padding-bottom:4px;
+}
+.section-title h2{margin:0;font-weight:800;font-size:18px;letter-spacing:-0.02em;color:var(--blue)}
+.section-title small{font-size:12px;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.card{
+  display:flex;flex-direction:column;gap:4px;
+  text-decoration:none;color:inherit;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 12px 13px;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.card:hover{transform:translateY(-2px);box-shadow:0 4px 0 var(--frame);border-color:var(--frame)}
+.card:active{transform:translateY(1px)}
+.card h3{margin:0;font-weight:700;font-size:16px;line-height:1.3;letter-spacing:-0.02em;color:var(--ink);overflow-wrap:anywhere}
+.card p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.45}
+.card.soon{border-style:dashed;cursor:default;background:var(--paper-2)}
+.card.soon:hover{transform:none;box-shadow:none;border-color:var(--line)}
+
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:22px 0}
+.foot{text-align:center;font-size:11px;color:var(--ink);opacity:.75;margin:0}
+
+@media (min-width:640px){
+  .inner{padding:20px 22px 24px}
+  .grid{gap:14px}
+  .card h3{font-size:17px}
+}
+@media (prefers-reduced-motion:reduce){
+  .bgm .track span{animation:none;padding-left:0}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="counter">
+    <span>TODAY <b id="today">17</b> | TOTAL <b>3,481</b></span>
+    <span class="url">babydongo</span>
+  </div>
+
+  <div class="frame">
+    <div class="inner">
+      <div class="profile">
+        <img class="avatar" src="profile.jpg" alt="babydongo 프로필 사진" width="72" height="72">
+        <div class="profile-text">
+          <h1>나만의 작은 <span class="nw">쓰레기통<svg class="heart" viewBox="0 0 24 24" role="img" aria-label="하트"><path fill="#ff7eb3" stroke="#ff7eb3" stroke-width="2.4" stroke-linejoin="round" d="M12 20.5c-.4 0-.8-.15-1.1-.42C7.2 16.9 3.5 13.7 3.5 9.6 3.5 6.9 5.6 4.8 8.2 4.8c1.5 0 2.9.72 3.8 1.9.9-1.18 2.3-1.9 3.8-1.9 2.6 0 4.7 2.1 4.7 4.8 0 4.1-3.7 7.3-7.4 10.48-.3.27-.7.42-1.1.42z"/></svg></span></h1>
+          <p class="count">만든 게임 <b id="count">5</b>개</p>
+        </div>
+      </div>
+
+      <div class="bgm" aria-label="배경음악">
+        <span class="tag">♪ BGM</span>
+        <div class="track"><span>NOW PLAYING ▶ 해무관의 밤 · 잊혀진 교실 · 아오바 학원 · BEAT//X · Comma ☆ 일촌 신청 환영 ☆</span></div>
+      </div>
+
+      <div class="search">
+        <label for="q" aria-hidden="true">🔍</label>
+        <input id="q" type="search" placeholder="게임 이름 검색" autocomplete="off" enterkeyhint="search" aria-label="게임 이름 검색">
+      </div>
+
+      <div class="section-title">
+        <h2>✿ 게임 목록</h2>
+        <small id="shown">5 / 5</small>
+      </div>
+
+      <div class="grid" id="grid">
+        <a class="card" href="https://haemu-night-mystery.netlify.app" target="_blank" rel="noopener" data-name="해무관의 밤 haemu">
+          <h3>해무관의 밤</h3>
+          <p>폭풍에 갇힌 저택, 회장의 죽음과 범인 찾기</p>
+        </a>
+        <a class="card" href="https://forgotten-classroom.netlify.app" target="_blank" rel="noopener" data-name="잊혀진 교실 forgotten classroom">
+          <h3>잊혀진 교실</h3>
+          <p>멈춘 시계 4시 17분, 교실의 비밀</p>
+        </a>
+        <a class="card" href="https://aoba-academy.netlify.app" target="_blank" rel="noopener" data-name="아오바 학원 aoba academy">
+          <h3>아오바 학원</h3>
+          <p>등교, 장난, 달리기, 셀카! 학원 생활 시뮬</p>
+        </a>
+        <a class="card" href="https://beatx-rhythm.netlify.app" target="_blank" rel="noopener" data-name="BEAT//X beatx 비트엑스 비트">
+          <h3>BEAT//X</h3>
+          <p>핑크빛 4레인 리듬 게임</p>
+        </a>
+        <a class="card" href="https://comma-aichat.github.io/comma-aichat/#home" target="_blank" rel="noopener" data-name="Comma 콤마 ai chat 채팅">
+          <h3>Comma</h3>
+          <p>캐릭터를 만들고 대화하는 AI 채팅</p>
+        </a>
+        <div class="card soon" data-soon>
+          <h3>다음 게임</h3>
+          <p>열심히 만드는 중…</p>
+        </div>
+      </div>
+      <p class="empty" id="empty" hidden>그런 이름의 게임은 아직 없어요 (｡•́︿•̀｡)</p>
+    </div>
+  </div>
+
+  <p class="foot">ⓒ babydongo · 카드를 누르면 게임이 새 창에서 열려요</p>
+</div>
+
+<script>
+(function(){
+  var q=document.getElementById('q');
+  var cards=[].slice.call(document.querySelectorAll('#grid .card:not([data-soon])'));
+  var soon=document.querySelector('[data-soon]');
+  var shown=document.getElementById('shown');
+  var empty=document.getElementById('empty');
+  var total=cards.length;
+  document.getElementById('count').textContent=total;
+
+  function norm(s){return (s||'').toLowerCase().replace(/[\s\/]/g,'');}
+  function apply(){
+    var term=norm(q.value), n=0;
+    cards.forEach(function(c){
+      var ok=norm(c.dataset.name).indexOf(term)!==-1;
+      c.hidden=!ok; if(ok)n++;
+    });
+    // keep the 2-column grid even
+    soon.hidden=!(term===''&&n%2===1);
+    shown.textContent=n+' / '+total;
+    empty.hidden=n!==0;
+  }
+  q.addEventListener('input',apply);
+  q.addEventListener('keydown',function(e){if(e.key==='Enter')q.blur();});
+  try{
+    var k='mh_today', v=parseInt(localStorage.getItem(k)||'17',10)+1;
+    localStorage.setItem(k,String(v));
+    document.getElementById('today').textContent=v;
+  }catch(e){}
+  apply();
+})();
+</script>
+</body>
+</html>

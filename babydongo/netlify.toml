@@ -1,0 +1,6 @@
+# babydongo 전용 Netlify 설정 (Netlify Base directory = babydongo)
+[build]
+  publish = "."
+  command = ""
+  # babydongo 폴더가 바뀔 때만 배포
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
