@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>본격! 악녀로 살아남기</title><meta name="description" content="악녀로 빙의해 여섯 남주의 마음을 사로잡는 로맨스 판타지 비주얼 노벨 (체험판)">
+<title>본격! 악녀로 살아남기</title><meta name="description" content="악녀로 빙의해 여섯 남주의 마음을 사로잡는 로맨스 판타지 비주얼 노벨">
 <meta name="theme-color" content="#3a0b16">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:ital,wght@1,500&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700;800&display=swap"><style>/* Layout: one full-bleed stage. Title, story and menus are layers over a painted scene;
    ivory "letter paper" panels with thin champagne-gold rules sit on a dim ballroom night. */
@@ -393,7 +393,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
         <div class="who" id="t-who" aria-live="polite"></div>
       </nav>
     </div>
-    <div class="title-foot">체험판 · 프롤로그 ~ 제5장 · 배경음악과 효과음은 임시 제작물입니다</div>
+    <div class="title-foot">전 6장 완결 · 엔딩 17종 · 배경음악과 효과음은 임시 제작물입니다</div>
   </section>
 
   <!-- GAME -->
@@ -478,6 +478,8 @@ window.ART_OVERRIDES = Object.assign({
   bg_camp: 'img/bg_camp.webp',
   bg_temple: 'img/bg_temple.webp',
   bg_snow: 'img/bg_snow.webp',
+  bg_festival: 'img/bg_festival.webp',
+  bg_stone: 'img/bg_stone.webp',
 }, window.ART_OVERRIDES || {});
 /* =========================================================
    임시 아트 (PLACEHOLDER ART)
@@ -780,6 +782,7 @@ const CHARS = {
   physician: { name:'시의 한스', title:'', color:'#6e4b52' },
   templar: { name:'신전 기사', title:'', color:'#6e4b52' },
   priest: { name:'대신관', title:'', color:'#3a3a3a' },
+  emperor: { name:'황제', title:'', color:'#8a6a2a' },
   masked: { name:'검은 가면의 남자', title:'', color:'#3a3a3a' },
   leon: { name:'레온하르트', full:'레온하르트 솔라리스', title:'제국의 황태자', color:'#c9a227', role:'황태자',
     look:'금발 · 청안 · 흰색과 금색의 황실 제복', age:'25세',
@@ -845,9 +848,6 @@ const CGS = [
   { id:'cg_dance_aiden', title:'첫 왈츠 · 에이든', cond:'근무 중인 에이든에게 춤을 청해 수락받는다 (신뢰 필요)', bg:'ballroom', chars:[{id:'me',x:660,s:1.45},{id:'aiden',x:940,s:1.5,flip:true}], fx:'sparkle' },
   { id:'cg_cecilia_corridor', title:'성녀의 진짜 얼굴', cond:'제1장 마지막 · 복도에서 세실리아와 마주친다', bg:'corridor', chars:[{id:'cecilia',x:800,s:1.55}], fx:'shadow' },
   { id:'cg_bad_exile', title:'원작대로의 몰락', cond:'배드 엔딩 「원작대로의 몰락」', bg:'exile', chars:[{id:'me',x:800,s:1.4}], tint:'#1a1a22' },
-  { id:'cg_soon_jealous', title:'질투의 무도회', cond:'제3장 이후 공개 예정', soon:true, bg:'ballroom', chars:[] },
-  { id:'cg_soon_confess', title:'고백', cond:'개인 루트에서 공개 예정', soon:true, bg:'corridor', chars:[] },
-  { id:'cg_soon_kiss', title:'입맞춤 직전', cond:'개인 루트에서 공개 예정', soon:true, bg:'bedroom', chars:[] },
 ];
 
 const ENDINGS = [
@@ -856,16 +856,18 @@ const ENDINGS = [
   { id:'bad_hunt', kind:'BAD END', title:'사냥제의 제물', cond:'제3장 · 마수 앞에서 성녀를 밀쳐 내고 도망친다.' },
   { id:'bad_masque', kind:'BAD END', title:'이단의 가면', cond:'제4장 · 증거 없이 대신관을 공개적으로 고발한다.' },
   { id:'bad_fire', kind:'BAD END', title:'불타는 경전', cond:'제5장 · 고백 대신 신전의 책을 불태운다.' },
-  { id:'happy_leon', kind:'HAPPY END', title:'황태자 레온하르트 엔딩', soon:true },
-  { id:'happy_kasian', kind:'HAPPY END', title:'북부 대공 카시안 엔딩', soon:true },
-  { id:'happy_aiden', kind:'HAPPY END', title:'기사단장 에이든 엔딩', soon:true },
-  { id:'happy_luciel', kind:'HAPPY END', title:'대마법사 루시엘 엔딩', soon:true },
-  { id:'happy_cedric', kind:'HAPPY END', title:'사교계의 제왕 세드릭 엔딩', soon:true },
-  { id:'happy_noel', kind:'HAPPY END', title:'재상가의 노엘 엔딩', soon:true },
-  { id:'power', kind:'NORMAL END', title:'왕좌 없는 여왕', soon:true },
-  { id:'revenge', kind:'NORMAL END', title:'복수의 꽃', soon:true },
-  { id:'true', kind:'TRUE END', title:'제국의 꽃은 스스로 핀다', soon:true },
-  { id:'secret', kind:'SECRET END', title:'???', soon:true },
+  { id:'bad_ruin', kind:'BAD END', title:'사교계의 몰락', cond:'최종장 · 변론에 필요한 신뢰·권력·정보가 모자란다.' },
+  { id:'bad_final', kind:'BAD END', title:'원작의 마지막 문장', cond:'최종장 · 원작대로 고개를 숙인다.' },
+  { id:'happy_leon', kind:'HAPPY END', title:'황태자 레온하르트 엔딩', cond:'최종장 · 레온하르트에게 진실을 고백하고, 함께 변론한다.' },
+  { id:'happy_kasian', kind:'HAPPY END', title:'북부 대공 카시안 엔딩', cond:'최종장 · 카시안에게 진실을 고백하고, 함께 변론한다.' },
+  { id:'happy_aiden', kind:'HAPPY END', title:'기사단장 에이든 엔딩', cond:'최종장 · 에이든에게 진실을 고백하고, 함께 변론한다.' },
+  { id:'happy_luciel', kind:'HAPPY END', title:'대마법사 루시엘 엔딩', cond:'최종장 · 루시엘에게 진실을 고백하고, 함께 변론한다.' },
+  { id:'happy_cedric', kind:'HAPPY END', title:'사교계의 제왕 세드릭 엔딩', cond:'최종장 · 세드릭에게 진실을 고백하고, 함께 변론한다.' },
+  { id:'happy_noel', kind:'HAPPY END', title:'재상가의 노엘 엔딩', cond:'최종장 · 노엘에게 진실을 고백하고, 함께 변론한다.' },
+  { id:'power', kind:'NORMAL END', title:'왕좌 없는 여왕', cond:'최종장 · 충분한 권력으로 재판을 뒤집는다.' },
+  { id:'revenge', kind:'NORMAL END', title:'복수의 꽃', cond:'최종장 · 충분한 정보로 대신관의 죄를 폭로한다.' },
+  { id:'true', kind:'TRUE END', title:'제국의 꽃은 스스로 핀다', cond:'세실리아와 휴전하고, 누군가에게 고백하고, 대신관을 흔든다.' },
+  { id:'secret', kind:'SECRET END', title:'두 번째 원고', cond:'진엔딩의 마지막 순간, 책의 기원을 아는 자만 볼 수 있는 틈.' },
 ];
 
 /* =========================================================
@@ -2639,7 +2641,346 @@ const Story = (() => {
     m('남은 시간은 180일.'),
     m('원작의 마지막 화. 건국제의 밤. 이번엔, 결말을 내가 쓴다.'),
     {t:'clear', id:'clear_ch5'},
-    demoEnd({n:5}),
+    go('c6_morning'),
+  ],
+
+  /* ================= 최종장 ================= */
+  c6_morning:[
+    chapter('FINAL CHAPTER','건국제'), {t:'meta', chapter:'최종장 건국제', label:'1년째 아침', progress:0},
+    autosave('최종장 시작'),
+    music('morning'), bg('bedroom'),
+    n('봄의 첫째 달 열닷새. 이 몸으로 눈을 뜬 지 꼭 1년이 되는 날.'),
+    n('원작 마지막 화. 건국제의 아침이었다.'),
+    say('hanna','아가씨, 드레스 준비됐어요. …오늘은 제가 끝까지 옆에 있을게요. 무슨 일이 있어도요.',{if:S=>!!S.flags.hannaKnows}),
+    say('hanna','아가씨, 드레스 준비됐어요. 오늘 정말 예쁘세요. 1년 전 그날보다 훨씬요.',{if:S=>!S.flags.hannaKnows}),
+    m('1년 전 그날, 나는 찻잔을 깨뜨린 한나에게 무슨 말을 했더라.'),
+    m('그 작은 선택 하나하나가, 오늘까지 이어져 왔어.'),
+    m('원작에서 오늘 밤 악녀는 모든 죄가 폭로돼 쫓겨나. 그리고 지금 그 책에는, 내가 죽는다고 적혀 있지.'),
+    m('…좋아. 마지막 장을 쓰러 가자.'),
+    go('c6_plaza'),
+  ],
+  c6_plaza:[
+    {t:'meta', chapter:'최종장 건국제', label:'건국제의 밤', progress:15},
+    music('ball'), bg('festival'),
+    n('황궁 앞 광장. 등불이 줄지어 흔들리고, 밤하늘에서 불꽃이 연달아 터졌다. 제국 건국 1천 년째 되는 밤이었다.'),
+    n('계단 위 단상에 황제가 앉았다. 그 곁에 대신관 베네딕트가 낡은 책 한 권을 품에 안고 서 있었다.'),
+    n('대신관의 품에 안긴 책은 내가 가져온 것과 똑같았다. 한 권이 아니었던 거야. 아니면, 책이 스스로 돌아간 건지도.',{if:is('book','b')}),
+    music('tense'),
+    say('priest','건국 1천 년의 밤, 신전은 성서의 이름으로 한 사람의 죄를 고합니다.'),
+    say('priest','{full}. 앞으로 나오십시오.'),
+    n('광장이 조용해졌다. 수천 개의 시선이 한꺼번에 나를 향했다. 원작의 삽화와 똑같은 구도였다.'),
+    say('priest','하나. 황태자 탄신 무도회에서 성녀에게 와인을 끼얹어 모욕한 죄.',{if:S=>S.flags.wine==='pour'}),
+    say('priest','하나. 성녀의 다과회에서 독을 쓴 혐의.',{if:S=>!!S.flags.teaPartial}),
+    say('priest','하나. 사냥제에 마수를 불러들인 혐의.',{if:S=>S.flags.sachet==='none' || S.flags.sachet==='planted'}),
+    say('priest','하나. 건국 성배를 훔친 혐의.',{if:S=>S.flags.framed==='partial'}),
+    say('priest','하나. 신전에 몰래 들어 성서를 훔친 죄.',{if:S=>S.flags.book==='take' || S.flags.book==='page'}),
+    say('priest','그리고 무엇보다. 신이 쓰신 성서를 거스르고, 이 세계의 이야기를 어지럽힌 이단의 죄.'),
+    say('crowd','이단이라니…',{if:S=>stains(S)<=1}),
+    say('crowd','역시 악녀였어…',{if:S=>stains(S)>=2}),
+    say('emperor','{surname} 공작 영애. 건국제의 법도에 따라 변론의 기회를 주겠다.'),
+    n('나는 계단 아래에 섰다. 그리고 광장을 돌아보았다.'),
+    ...HEROES.map(h=>show(h,'l',{enter:true, if:S=>S.flags.route===h})),
+    ...per('route',{
+      leon:['…나는 여기 있다. 황태자가 아니라, 그대 편으로.'],
+      kasian:[n('카시안이 군중을 헤치고 내 옆에 섰다. 아무 말도 하지 않았다. 그걸로 충분했다.')],
+      aiden:['기사단장의 자리를 내려놓고 왔습니다. 지금은 영애의 기사일 뿐입니다.'],
+      luciel:['걱정 마. 오늘은 마탑도, 신전도, 책도 너한테 손 못 대.'],
+      cedric:['오늘 밤 기사 제목은 이미 정해 뒀어요. 끝까지 해 봐요.'],
+      noel:['누님. 재상가 장부, 전부 들고 왔어요. 필요하면 말만 해요.'],
+    }),
+    show('cecilia','r',{enter:true, if:S=>!!S.flags.truce}),
+    say('cecilia','혼자 세워 두지 않아. 같은 곳에서 왔잖아.',{if:S=>!!S.flags.truce}),
+    hide(),
+    autosave('최후의 변론 직전'),
+    choice('defense','최후의 변론—',{
+      a1:{text:'레온하르트의 손을 잡고, 함께 진실을 말한다.', hidden:true, cond:S=>S.flags.route==='leon', condText:'레온하르트에게 고백', go:'c6_love'},
+      a2:{text:'카시안의 손을 잡고, 함께 진실을 말한다.', hidden:true, cond:S=>S.flags.route==='kasian', condText:'카시안에게 고백', go:'c6_love'},
+      a3:{text:'에이든의 손을 잡고, 함께 진실을 말한다.', hidden:true, cond:S=>S.flags.route==='aiden', condText:'에이든에게 고백', go:'c6_love'},
+      a4:{text:'루시엘의 손을 잡고, 함께 진실을 말한다.', hidden:true, cond:S=>S.flags.route==='luciel', condText:'루시엘에게 고백', go:'c6_love'},
+      a5:{text:'세드릭의 손을 잡고, 함께 진실을 말한다.', hidden:true, cond:S=>S.flags.route==='cedric', condText:'세드릭에게 고백', go:'c6_love'},
+      a6:{text:'노엘의 손을 잡고, 함께 진실을 말한다.', hidden:true, cond:S=>S.flags.route==='noel', condText:'노엘에게 고백', go:'c6_love'},
+      b:{text:'공작가의 이름과 1년 동안 쌓은 힘으로, 이 재판을 뒤집는다.', e:{style:'proud'}, go:'c6_power'},
+      c:{text:'대신관이 꾸민 일을 하나하나 폭로한다.', e:{style:'ruthless'}, go:'c6_revenge'},
+      d:{text:'세실리아와 함께, 이 세계가 한 권의 책이라는 진실을 모두 앞에서 말한다.', hidden:true,
+         cond:S=>!!S.flags.truce && !!S.flags.confessed && (!!S.flags.benedictDoubt || !!S.flags.bookOrigin), condText:'세실리아와 휴전 · 누군가에게 고백 · 대신관의 흔들림',
+         e:{style:'kind'}, go:'c6_true'},
+      e:{text:'…원작대로, 고개를 숙인다.', go:'c6_bad_final'},
+    }),
+  ],
+  /* --- 남주 루트 --- */
+  c6_love:[
+    {t:'meta', chapter:'최종장 건국제', label:'함께 말하는 진실', progress:40},
+    go('c6_ruin',{if:S=>{ const h=S.flags.route; return (S.aff[h]||0)+(S.tr[h]||0) < 55 || S.rep < -50; }}),
+    ...HEROES.map(h=>show(h,'c',{enter:true, if:S=>S.flags.route===h})),
+    ...per('route',{
+      leon:['황태자 레온하르트 솔라리스의 이름으로 말한다.', '그 죄목들 중 어느 것도 이 사람이 한 일이 아니다. 나는 1년 동안 이 사람을 의심했고, 지켜봤고, 결국 모든 걸 확인했다.', '그리고 나는 이 사람과 함께 살기로 했다. 신탁이 아니라, 내 눈으로 고른 사람이다.'],
+      kasian:['북부 대공 카시안 노르베르트입니다.', '이 사람은 북부의 겨울을 구했습니다. 남부의 곡물상들이 막은 길을 열어 줬습니다.', '…그리고 저는 이 사람 없이는, 다시는 북부의 겨울을 견딜 수 없을 것 같습니다.'],
+      aiden:['기사 에이든 크레스트가 명예를 걸고 증언합니다.', '와인을 대신 맞던 밤부터 마수 앞에 서던 날까지, 저는 이 사람이 누구도 해치지 않는 걸 봤습니다.', '이 사람이 이단이라면, 저도 함께 이단이 되겠습니다.'],
+      luciel:['대마법사 루시엘이야. 마탑의 이름 걸고 말할게.', '이 사람 영혼은, 내가 본 영혼 중에 제일 깨끗해. 남의 몸을 빌렸어도.', '…그러니까 이 사람한테 손대려면, 먼저 나부터 지워 봐.'],
+      cedric:['사교계에 소문 하나 퍼뜨리겠습니다. 이번엔 진실이에요.', '와인도, 독도, 마수도, 성배도. 전부 이분이 아니라 신전의 손이었다는 증거, 제가 1년 동안 모아 뒀거든요.', '그리고 하나 더. 사교계의 제왕은 오늘부로 은퇴합니다. 이분 한 사람의 기사가 되려고요.'],
+      noel:['재상가의 노엘 아르덴이에요.', '신전 장부요. 설백초, 마수 유인향, 붉은 깃털 가면, 전부 신전 돈으로 샀어요. 날짜까지 다 있어요.', '…그리고, 저 이제 애 아니에요. 이 사람 옆에 설 거예요. 평생.'],
+    }),
+    say('me','저는 이 세계 사람이 아니었어요. 1년 전, 이 몸으로 눈을 떴어요.'),
+    say('me','그날부터 한 번도 원작의 악녀처럼 살지 않았어요. 그건, 제 곁에 선 이 사람이 증명해 줄 거예요.'),
+    say('crowd','다른 세계…?'),
+    n('광장이 술렁였다. 그런데 이상하게도, 아무도 비웃지 않았다.'),
+    effect({flag:{verdict:'love'}}),
+    go('c6_stone'),
+  ],
+  c6_power:[
+    {t:'meta', chapter:'최종장 건국제', label:'공작가의 이름으로', progress:40},
+    go('c6_ruin',{if:S=>S.power<55}),
+    say('me','변론이요? 필요 없어요.'),
+    say('me','{surname} 공작가는 제국 곡물의 3할, 황실 기사단 군자금의 절반을 대고 있죠. 그리고 지난 1년, 저는 사교계의 빚 장부를 전부 손에 넣었어요.'),
+    n('광장 곳곳에서 귀족들의 얼굴이 하얗게 질렸다. 나와 눈이 마주친 사람들이 하나둘 고개를 돌렸다.'),
+    say('me','이 자리의 누구든, 제게 돌을 던지고 싶으면 던지세요. 다만 내일 아침 그 가문이 무사할지는 장담 못 해요.'),
+    say('emperor','…공작 영애. 그것이 변론인가, 협박인가.'),
+    say('me','둘 다요, 폐하. 그리고 신전이 오늘 낭독한 죄목 중 증거가 있는 건 하나도 없죠.'),
+    n('아무도 대답하지 않았다. 대신관의 손이 책 위에서 떨렸다.'),
+    effect({flag:{verdict:'power'}}),
+    go('c6_stone'),
+  ],
+  c6_revenge:[
+    {t:'meta', chapter:'최종장 건국제', label:'대신관의 죄', progress:40},
+    go('c6_ruin',{if:S=>!(S.info>=40 || (!!S.flags.priestExposed && S.info>=30))}),
+    say('me','죄를 고하신다면, 저도 하나 고하죠.'),
+    say('me','다과회의 설백초. 신전 시녀가 각설탕 그릇에 넣었어요. 사냥제의 유인향. 검은 촛농 봉인이 찍혀 있었죠. 대신관님의 봉인이요.'),
+    say('me','가면무도회의 성배. 그 와인빛 드레스는 신전이 재단사 길드에 주문했어요. 주문서, 여기 있습니다.'),
+    say('me','그리고 그 모든 일은, 대신관님 품에 안긴 그 책에 미리 적혀 있었어요. 대신관님이 직접 쓴 메모와 함께.'),
+    say('crowd','대신관이…?!'),
+    n('대신관의 얼굴에서 핏기가 가셨다. 그가 한 발 물러섰다. 처음으로, 그의 품속 책이 무거워 보였다.'),
+    effect({flag:{verdict:'revenge'}}),
+    go('c6_stone'),
+  ],
+  c6_true:[
+    {t:'meta', chapter:'최종장 건국제', label:'두 사람의 진실', progress:40},
+    show('cecilia','r',{enter:true}),
+    say('me','저는 {full}이 아니었어요. 1년 전, 다른 세계에서 이 몸으로 왔어요.'),
+    say('cecilia','저도요. 저는 원래 세실리아 루미엘이 아니에요. 같은 세계에서 왔어요.'),
+    say('cecilia','그리고 이 세계는, 우리가 그곳에서 읽던 소설이에요. 대신관님이 성서라고 부르는 그 책이요.'),
+    say('crowd','성녀님까지…?'),
+    say('me','원작에서 저는 오늘 밤 쫓겨나요. 지금 그 책에는 죽는다고 적혀 있고요.'),
+    say('cecilia','원작에서 저는 오늘 밤 행복해져요. 근데 그건 제 행복이 아니었어요. 남이 써 준 대사였지.'),
+    say('me','그러니까 오늘은, 원작 말고 우리가 직접 말할게요.'),
+    n('나와 세실리아는 나란히 섰다. 원작의 악녀와 원작의 여주인공이, 같은 편으로.'),
+    effect({rival:-20, flag:{verdict:'true'}}),
+    hide(), go('c6_stone'),
+  ],
+  c6_ruin:[
+    {t:'meta', chapter:'BAD END', label:'사교계의 몰락', progress:100},
+    music('bad'), fx('bad'),
+    n('나는 입을 열었다. 하지만 1년 동안 쌓인 소문은, 내 목소리보다 컸다.'),
+    say('crowd','변명이야. 다 변명이야.'),
+    n('증거도, 증인도, 힘도 조금씩 모자랐다. 단 한 걸음씩.'),
+    n('황제는 판결을 미뤘다. 대신 공작가는 모든 초대장을 잃었고, 나는 저택 밖으로 나가지 않게 되었다.'),
+    bg('exile'),
+    n('죽지도, 쫓겨나지도 않았다. 다만 제국의 누구도 더 이상 내 이름을 부르지 않았다.'),
+    q('『{full|은} 살아남았다. 그러나 그 이름은 사교계에서 영영 지워졌다.』'),
+    ending('bad_ruin'),
+  ],
+  c6_bad_final:[
+    {t:'meta', chapter:'BAD END', label:'원작의 마지막 문장', progress:100},
+    music('bad'),
+    n('나는 고개를 숙였다. 1년 동안 버텨 온 무언가가, 그 순간 툭 끊어졌다.'),
+    say('priest','성서는 완성되었습니다.'),
+    fx('bad'),
+    n('대신관이 마지막 장을 소리 내어 읽었다. 『건국제의 밤, 악녀는 죽는다.』'),
+    n('손끝부터 차가워졌다. 첫눈의 밤에 보았던 것처럼, 손이 천천히 투명해져 갔다.'),
+    m('…아. 결국 원작이 이기는구나.'),
+    bg('exile'),
+    q('『건국제의 밤, 악녀 {full|은} 죽었다. 성서는 한 글자도 어긋나지 않았다.』'),
+    ending('bad_final'),
+  ],
+  /* --- 지하 성소 --- */
+  c6_stone:[
+    {t:'meta', chapter:'최종장 건국제', label:'건국 비석', progress:60},
+    music('tense'),
+    fx('shake'),
+    n('그때, 대신관이 책을 끌어안고 단상 뒤 계단으로 달려 내려갔다. 황궁 지하로 이어지는 계단이었다.'),
+    say('priest','아직이다…! 자정까지는 아직이다! 비석 앞에서 낭독하면, 성서는 완성된다!'),
+    m('건국 비석. 책이 떨어진 날 금이 갔다는 그 자리야.',{if:S=>!!S.flags.bookOrigin}),
+    n('나는 그를 따라 계단을 뛰어 내려갔다.'),
+    bg('stone'),
+    n('황궁 지하 성소. 금이 간 건국 비석에서 빛이 새어 나오고, 허공에 글자 조각들이 떠다녔다. 책장에서 떨어져 나온 문장들 같았다.'),
+    n('대신관이 비석 앞에 무릎을 꿇고 책을 펼쳤다. 자정을 알리는 종이 울리기 시작했다.'),
+    say('priest','『건국제의 밤, 악녀 {full|은}…』'),
+    fx('flash'),
+    n('비석의 금이 크게 벌어졌다. 손끝이 차가워졌다. 첫눈의 밤처럼, 몸이 투명해지기 시작했다.'),
+    go('c6_end_love',{if:S=>S.flags.verdict==='love'}),
+    go('c6_end_power',{if:S=>S.flags.verdict==='power'}),
+    go('c6_end_revenge',{if:S=>S.flags.verdict==='revenge'}),
+    go('c6_end_true'),
+  ],
+  c6_end_love:[
+    ...HEROES.map(h=>show(h,'c',{enter:true, if:S=>S.flags.route===h})),
+    ...per('route',{
+      leon:[n('누군가 투명해지는 내 손을 붙잡았다. 레온하르트였다.'), '…{name}. 그게 그대 이름이지. 내가 아는 유일한 그대의 이름.', '책이 뭐라고 쓰든, 나는 그 이름을 부를 거다. 매일. 평생.'],
+      kasian:[n('모피 망토가 투명해지는 내 어깨를 감쌌다. 1년 전 그 밤처럼.'), '{name}.', '북부에선 눈보라 속에서 길 잃은 사람의 이름을 계속 부릅니다. 대답할 때까지.', '…대답하십시오.'],
+      aiden:[n('에이든이 나와 비석 사이에 섰다. 방패도 검도 없이, 맨몸으로.'), '{name}, 제 뒤에 계십시오.', '기사는 손수건이 아니라 사람을 지킵니다. 처음부터 그렇게 맹세했습니다.'],
+      luciel:[n('루시엘이 내 손을 잡고, 그 위에 이마를 댔다.'), '계약 기억하지? 진실을 들은 마법사는 상대를 놓아주지 않아.', '{name}. 네 이름으로 계약 갱신이야. 기한은, 영원.'],
+      cedric:[n('세드릭이 내 손을 잡아 입을 맞췄다. 사교계 인사가 아니라, 처음 보는 떨리는 입맞춤이었다.'), '{name}. 사교계에서 제일 많이 불린 이름이 되게 해 줄게요.', '…아니, 취소. 나만 부를 거예요.'],
+      noel:[n('노엘이 투명해지는 내 손을 두 손으로 감쌌다. 그의 손이 떨리고 있었다.'), '{name} 누님. 아니, {name}.', '이제 누님이라고 안 부를래요. 이름으로 부를 거예요. 평생, 제일 가까이에서.'],
+    }),
+    fx('flash'),
+    n('책 속의 문장이 번지기 시작했다. 진실을 들은 문장이, 더는 버티지 못하고.'),
+    n('비석의 금이 천천히 닫혔다. 손끝에 온기가 돌아왔다.'),
+    say('priest','성서가… 지워진다…'),
+    n('대신관의 품에서 책이 미끄러졌다. 마지막 장에는 이제 아무것도 적혀 있지 않았다.'),
+    hide(),
+    go('c6_epi_leon',{if:S=>S.flags.route==='leon'}), go('c6_epi_kasian',{if:S=>S.flags.route==='kasian'}),
+    go('c6_epi_aiden',{if:S=>S.flags.route==='aiden'}), go('c6_epi_luciel',{if:S=>S.flags.route==='luciel'}),
+    go('c6_epi_cedric',{if:S=>S.flags.route==='cedric'}), go('c6_epi_noel'),
+  ],
+  c6_epi_leon:[
+    {t:'meta', chapter:'에필로그', label:'황태자비', progress:90},
+    music('waltz'), bg('palace'),
+    n('반년 뒤. 황궁 정원에 다시 봄이 왔다.'),
+    show('leon','c',{enter:true}),
+    say('leon','오늘 약혼 발표가 있다. 이번엔 신탁 없이.'),
+    say('leon','그대가 처음 무도회에서 내 눈을 똑바로 봤을 때, 나는 그게 오만인 줄 알았다. 지금은 안다. 그건 그대가 살아남으려고 낸 용기였다는 걸.'),
+    say('leon','이제 살아남지 않아도 된다. 내 곁에서는, 그냥 살면 된다.'),
+    q('『제국의 황태자는 단 한 사람을 사랑했다. 그 사람은 원작의 성녀가 아니었다.』'),
+    ending('happy_leon'),
+  ],
+  c6_epi_kasian:[
+    {t:'meta', chapter:'에필로그', label:'북부의 봄', progress:90},
+    music('waltz'), bg('snow'),
+    n('반년 뒤. 북부에 첫눈이 내렸다. 이번에는 아무도 쓰러지지 않았다.'),
+    show('kasian','c',{enter:true}),
+    say('kasian','북부의 겨울은 깁니다. 지루하실 겁니다.'),
+    say('me','괜찮아요. 같이 있으면.'),
+    n('그는 대답 대신 망토를 열어, 나를 안쪽으로 끌어당겼다. 그리고 아주 작게 웃었다. 1년 동안 처음 보는 웃음이었다.'),
+    say('kasian','…북부 대공비. 마음에 드십니까, 그 이름.'),
+    q('『얼음의 대공은 한 사람 앞에서만 녹았다. 그 사람은 원작에서 그가 경멸하던 악녀였다.』'),
+    ending('happy_kasian'),
+  ],
+  c6_epi_aiden:[
+    {t:'meta', chapter:'에필로그', label:'기사의 맹세', progress:90},
+    music('waltz'), bg('palace'),
+    n('반년 뒤. 기사단 연병장. 에이든이 한쪽 무릎을 꿇었다.'),
+    show('aiden','c',{enter:true}),
+    say('aiden','기사 서임식 때 했던 맹세를 다시 하겠습니다. 이번엔 황실이 아니라 한 사람에게.'),
+    say('aiden','{name}. 제 검과 명예와, 남은 생 전부를 당신께 바칩니다.'),
+    say('aiden','…그리고 혹시 괜찮으시다면, 반지도 받아 주십시오.'),
+    n('그의 귀 끝이, 그 붉은 머리카락만큼 붉어져 있었다.'),
+    q('『제국의 검은 단 한 사람을 위해 칼집에 들어갔다.』'),
+    ending('happy_aiden'),
+  ],
+  c6_epi_luciel:[
+    {t:'meta', chapter:'에필로그', label:'마탑의 계약', progress:90},
+    music('waltz'), bg('terrace'),
+    n('반년 뒤. 마탑 꼭대기. 루시엘이 내 왼손 약지에 은반지를 끼웠다. 1년 전 다과회 때처럼.'),
+    show('luciel','c',{enter:true}),
+    say('luciel','이번엔 독을 알려 주는 반지 아니야. 그냥 반지야.'),
+    say('luciel','영혼의 결이 몸이랑 안 맞던 아가씨가, 이제 완전히 이 세계 사람이 됐네. 결이 딱 맞아.'),
+    say('luciel','그러니까 이제 나랑만 맞으면 돼. 영원히. 계약이니까.'),
+    q('『대마법사는 평생 단 하나의 계약만 맺었다. 상대는 다른 세계에서 온 악녀였다.』'),
+    ending('happy_luciel'),
+  ],
+  c6_epi_cedric:[
+    {t:'meta', chapter:'에필로그', label:'은퇴한 제왕', progress:90},
+    music('waltz'), bg('ballroom'),
+    n('반년 뒤. 사교계 신문 1면.'),
+    q('『사교계의 제왕, 은퇴 후 첫 무도회에서 공작 영애에게 청혼』'),
+    show('cedric','c',{enter:true}),
+    say('cedric','이 기사는 제가 썼어요. 마지막 특종이죠.'),
+    say('cedric','소문은 늘 반쯤 거짓이었는데, 이번 건 전부 진짜예요. 그러니까 대답해 줘요. 모두가 보는 앞에서.'),
+    n('홀 전체가 숨을 죽였다. 나는 웃으며 그의 손을 잡았다.'),
+    q('『사교계의 제왕은 마지막으로 진실 하나를 퍼뜨렸다. 그는 악녀를 사랑했다.』'),
+    ending('happy_cedric'),
+  ],
+  c6_epi_noel:[
+    {t:'meta', chapter:'에필로그', label:'이름으로 부르는 사람', progress:90},
+    music('waltz'), bg('garden'),
+    n('반년 뒤. 재상가 정원. 노엘이 장부 대신 꽃다발을 들고 서 있었다.'),
+    show('noel','c',{enter:true}),
+    say('noel','아버지가 그러시더라고요. 재상가 막내가 공작가 영애한테 청혼하면, 장부상으로는 손해래요.'),
+    say('noel','그래서 장부 버렸어요. …받아 줄 거죠, {name}?'),
+    n('처음 만난 날 “얕보지 마세요, 누님”이라고 말하던 소년은, 이제 내 이름을 부르는 남자가 되어 있었다.'),
+    q('『재상가의 막내는 평생 한 사람에게만 빚을 졌다. 갚을 생각은 없었다.』'),
+    ending('happy_noel'),
+  ],
+  c6_end_power:[
+    n('나는 투명해지는 손으로 대신관의 손목을 붙잡았다.'),
+    say('me','낭독은 거기까지예요.'),
+    n('뒤따라온 공작가 기사들이 대신관을 비석에서 떼어 냈다. 나는 책을 빼앗아 덮었다.'),
+    n('책이 덮이자 비석의 빛이 잦아들었다. 손끝에 온기가 돌아왔다.'),
+    m('책은 결말을 쓰지 못했어. 내가 덮었으니까.'),
+    bg('palace'),
+    {t:'meta', chapter:'에필로그', label:'왕좌 없는 여왕', progress:90},
+    music('ball'),
+    n('1년 뒤. 나는 공작가의 후계자가 되었다. 황제는 나를 제국 재무 고문에 앉혔다.'),
+    n('사교계는 나를 여전히 악녀라고 불렀다. 다만 이제는 아무도 그 말을 내 앞에서 하지 않았다.'),
+    n('여섯 남자 중 누구의 손도 잡지 않았다. 대신 그 누구도 내 손을 함부로 잡지 못했다.'),
+    q('『악녀는 왕좌에 앉지 않았다. 그럴 필요가 없었다.』'),
+    ending('power'),
+  ],
+  c6_end_revenge:[
+    n('나는 대신관의 손에서 책을 낚아챘다. 그리고 책장을 넘겼다. 대신관이 나오는, 단 세 번의 장면.'),
+    say('me','대신관님. 원작에서 당신은 어떻게 끝나는지 아세요?'),
+    say('priest','…그만.'),
+    say('me','“건국제 다음 날, 이름 없는 늙은 신관이 조용히 숨을 거두었다.” 그게 다예요. 당신은 끝까지 이름이 없어요.'),
+    n('대신관이 무너지듯 주저앉았다. 비석의 빛이 꺼졌다. 책을 믿던 손이 놓아 버리자, 책도 힘을 잃었다.'),
+    bg('exile'),
+    {t:'meta', chapter:'에필로그', label:'복수의 꽃', progress:90},
+    music('night'),
+    n('대신관은 신전 지하 감옥에 갇혔다. 신전은 무너졌고, 그 자리에 공작가의 깃발이 섰다.'),
+    n('나를 모함했던 영애들은 하나둘 수도원으로 떠났다. 원작에서 악녀가 갔어야 했던 바로 그곳으로.'),
+    m('통쾌해. 그런데 왜 이렇게 추운지 모르겠어.'),
+    q('『악녀는 살아남았다. 그리고 원작의 모든 문장에 하나씩 복수했다.』'),
+    ending('revenge'),
+  ],
+  c6_end_true:[
+    show('cecilia','r',{enter:true}),
+    say('cecilia','지금이야!'),
+    say('me','대신관님. 그 책에는 당신 이름이 없죠.'),
+    say('me','하지만 당신은 이 이야기 속에 살아 있어요. 20년 동안 그 책을 지킨 사람은, 원작의 어느 인물도 아니고 당신이었어요.'),
+    say('cecilia','베네딕트. 그게 당신 이름이잖아요. 책에 없어도, 우리는 알아요.'),
+    n('대신관의 낭독이 멈췄다.'),
+    say('priest','…베네딕트.'),
+    n('노인이 자기 이름을 소리 내어 불렀다. 처음 듣는 것처럼.'),
+    fx('flash'),
+    n('그 순간 책장이 한꺼번에 하얗게 바래 갔다. 첫 장부터 마지막 장까지, 모든 문장이 번지고 지워졌다.'),
+    n('비석의 금이 닫혔다. 허공의 글자 조각들이 눈처럼 내려앉아 사라졌다. 손끝에 온기가 돌아왔다.'),
+    say('cecilia','…백지야. 결말이 없어졌어.'),
+    say('me','아니. 이제부터 쓰는 거야. 우리가.'),
+    choice('secret','비석의 닫혀 가는 틈 너머로, 낯익은 불빛이 보인다—',{
+      a:{text:'세실리아의 손을 잡고, 이 세계에 남는다.', e:{style:'kind'}, go:'c6_epi_true'},
+      b:{text:'틈 너머를 들여다본다. 모니터 불빛. 원래의 세계.', hidden:true, cond:S=>!!S.flags.bookOrigin && S.info>=45, condText:'책의 기원을 안다 · 정보력 45 이상', go:'c6_secret'},
+    }),
+  ],
+  c6_epi_true:[
+    {t:'meta', chapter:'에필로그', label:'백지의 책', progress:90},
+    music('waltz'), bg('garden'),
+    n('1년 뒤. 신전의 백합 정원에서 작은 다과회가 열렸다. 이번엔 아무도 쓰러지지 않았다.'),
+    show('cecilia','r',{enter:true}),
+    say('cecilia','베네딕트 신관님은 요즘 고아원에서 아이들한테 글을 가르친대. 자기 이름 쓰는 법부터.'),
+    say('cecilia','그리고 나… 레온한테 차였어. 아니, 내가 찼어. 둘 다 원작 대사 말고 할 말이 없더라고.'),
+    n('우리는 웃었다. 같은 세계에서 온 두 사람이, 같은 탁자에서.'),
+    ...HEROES.map(h=>show(h,'l',{enter:true, if:S=>S.flags.route===h})),
+    n('정원 입구에서, 누군가 내 이름을 불렀다. 원작의 악녀 이름이 아니라, 1년 동안 내가 만들어 온 이름을.',{if:S=>!!S.flags.route && S.flags.route!=='none'}),
+    hide(),
+    n('백지가 된 책은 지금 내 책상 위에 있다. 첫 장에, 나는 한 줄을 적었다.'),
+    q('『제국의 꽃은 한 사람만을 사랑하지 않았다. 스스로 피어, 모두와 함께 살았다.』'),
+    ending('true'),
+  ],
+  c6_secret:[
+    {t:'meta', chapter:'SECRET', label:'두 번째 원고', progress:95},
+    music('quiet'),
+    n('나는 틈 너머로 손을 뻗었다. 손끝에 닿은 건, 키보드였다.'),
+    bg('office'),
+    fx('flash'),
+    n('새벽 두 시. 모니터 불빛만 남은 원룸.'),
+    m('…돌아왔어?'),
+    n('화면에는 《제국의 꽃은 한 사람만을 사랑한다》의 마지막 화가 떠 있었다. 그런데 내용이 달랐다.'),
+    q('『악녀는 쫓겨나지 않았다. 성녀는 원작의 대사를 버렸다. 그리고 이름 없는 신관은 자기 이름을 찾았다.』'),
+    n('댓글이 하나 달려 있었다. 방금 전 시각이었다.'),
+    q('『나는 여기 남기로 했어. 너는 거기서, 네 이야기를 써. 이번엔 야근 말고. ─ 같은 곳에서 온 C』'),
+    m('…세실리아.'),
+    n('나는 오래 화면을 바라보았다. 그리고 새 문서를 열었다. 커서가 깜빡였다.'),
+    m('첫 문장은 정해져 있었다.'),
+    q('『본격, 악녀로 살아남기. 제1화.』'),
+    ending('secret'),
   ],
   c3_bad:[
     {t:'meta', chapter:'BAD END', label:'사냥제의 제물', progress:100},
@@ -2658,6 +2999,8 @@ const Story = (() => {
 
   };
 
+  // 최종장 죄목 수: 원작대로 남은 오점의 개수
+  function stains(S){ const f=S.flags; return (f.wine==='pour'?1:0)+(f.teaPartial?1:0)+((f.sachet==='none'||f.sachet==='planted')?1:0)+(f.framed==='partial'?1:0)+((f.book==='take'||f.book==='page')?1:0); }
   function hunterOf(S){ const r=S.flags.ribbon; return r && r!=='none' ? r : topHero(S); }
   function nightHero(S){ const h=S.flags.hunter; return h && h!=='leon_cecilia' ? h : topHero(S); }
   function leonRefuses(S){ if(S.flags.letOriginal) return false; if(S.flags.hunter==='leon') return true; return (S.aff.leon||0)+(S.tr.leon||0)*.6 >= 30; }
@@ -3453,7 +3796,7 @@ const UI = (() => {
         $$('.gi',body).forEach(b=>b.onclick=()=>{ if(records.cg_unlocked.includes(b.dataset.id)) viewer(b.dataset.id); else toast('아직 획득하지 않은 CG예요.'); });
       } else {
         const got=ENDINGS.filter(e=>records.endings.includes(e.id)).length;
-        body.innerHTML=`<div class="count">달성 ${got} / ${ENDINGS.length}${records.endings.includes('clear_ch5')?' · 제5장 클리어':records.endings.includes('clear_ch4')?' · 제4장 클리어':records.endings.includes('clear_ch3')?' · 제3장 클리어':records.endings.includes('clear_ch2')?' · 제2장 클리어':records.endings.includes('clear_ch1')?' · 제1장 클리어':''}</div><div class="ends">${ENDINGS.map(e=>{ const on=records.endings.includes(e.id);
+        body.innerHTML=`<div class="count">달성 ${got} / ${ENDINGS.length}${ENDINGS.some(x=>!/BAD/.test(x.kind)&&records.endings.includes(x.id))?' · 완결':records.endings.includes('clear_ch5')?' · 제5장 클리어':records.endings.includes('clear_ch4')?' · 제4장 클리어':records.endings.includes('clear_ch3')?' · 제3장 클리어':records.endings.includes('clear_ch2')?' · 제2장 클리어':records.endings.includes('clear_ch1')?' · 제1장 클리어':''}</div><div class="ends">${ENDINGS.map(e=>{ const on=records.endings.includes(e.id);
           return `<div class="end${on?' got':' locked'}${e.soon?' soon':''}"><span class="kind">${esc(e.kind)}</span><b>${on||e.soon?esc(e.title):'잠긴 엔딩'}</b><span>${on?'달성 완료': e.soon? '후속 챕터에서 공개 예정' : esc(e.cond)}</span></div>`; }).join('')}</div>`;
       }
     };
@@ -3514,13 +3857,19 @@ const UI = (() => {
 
   /* ---------- endings ---------- */
   function showEnding(id){
-    const S=Game.state, e=ENDINGS.find(x=>x.id===id); S.ended=true; recordEnding(id); Sound.play('bad');
-    const el=$('#end-card'); el.className='endcard bad'; el.hidden=false;
-    el.innerHTML=`<div class="inner"><span class="k">${esc(e.kind)}</span><h2>${esc(e.title)}</h2>
-      <p>${esc(S.name)} ${esc(S.surname)}의 이야기는 원작이 정해 둔 마지막 문장에서 멈췄습니다. 하지만 이건 수많은 결말 중 하나일 뿐이에요.</p>
-      <p style="font-size:13px;color:#b9a3a7">마지막 자동 저장 지점으로 돌아가, 다른 방법으로 수습할 수 있어요.</p>
-      <div class="row"><button class="btn primary" id="e-retry">RETRY <span class="ko">수습할 기회로 돌아가기</span></button><button class="btn" id="e-title">TITLE <span class="ko">타이틀로</span></button></div></div>`;
+    const S=Game.state, e=ENDINGS.find(x=>x.id===id); S.ended=true; recordEnding(id);
+    const bad=/BAD/.test(e.kind); Sound.play(bad?'bad':'waltz');
+    const el=$('#end-card'); el.className='endcard'+(bad?' bad':''); el.hidden=false;
+    const got=ENDINGS.filter(x=>records.endings.includes(x.id)).length;
+    const body = bad
+      ? `<p>${esc(S.name)} ${esc(S.surname)}의 이야기는 원작이 정해 둔 마지막 문장에서 멈췄습니다. 하지만 이건 수많은 결말 중 하나일 뿐이에요.</p>
+         <p style="font-size:13px;color:#b9a3a7">마지막 자동 저장 지점으로 돌아가, 다른 방법으로 수습할 수 있어요.</p>`
+      : `<p>${esc(fill("{full|은}",S))} 원작의 마지막 문장을 넘어, 자신의 결말에 닿았습니다.</p>
+         <p style="font-size:13px;color:#d9c3a0">수집한 엔딩 ${got} / ${ENDINGS.length} · 다른 선택이 다른 결말로 이어져요.</p>`;
+    el.innerHTML=`<div class="inner"><span class="k">${esc(e.kind)}</span><h2>${esc(e.title)}</h2>${body}
+      <div class="row"><button class="btn primary" id="e-retry">RETRY <span class="ko">${bad?'수습할 기회로 돌아가기':'변론으로 돌아가기'}</span></button><button class="btn" id="e-gal">ENDINGS <span class="ko">엔딩 목록</span></button><button class="btn" id="e-title">TITLE <span class="ko">타이틀로</span></button></div></div>`;
     el.querySelector('#e-title').onclick=toTitle;
+    el.querySelector('#e-gal').onclick=()=>openGallery('end');
     el.querySelector('#e-retry').onclick=async()=>{ try{ const s=await store.listSlots(); if(s[0]) loadRec(s[0]); else toast('자동 저장 기록이 없어요.'); }catch(err){ toast(err.message); } };
   }
   const CLEAR = {
@@ -3528,7 +3877,7 @@ const UI = (() => {
     2:{ title:'성녀의 가면을 마주하다', body:'같은 세계에서 온 라이벌과 처음으로 맞붙었습니다.', next:'제3장 「사냥제와 약혼 발표」' },
     3:{ title:'원작의 기둥을 흔들다', body:'원작의 가장 예쁜 장면 앞에 서서, 무대 뒤의 또 다른 손을 보았습니다.', next:'제4장 「건국 기념 가면무도회」' },
     4:{ title:'가면 아래의 경전', body:'원작이 이 세계에 실재한다는 것을, 그리고 그 마지막 장이 바뀌었다는 것을 알았습니다.', next:'제5장 「대신관의 경전」' },
-    5:{ title:'진실을 말하다', body:'책 속 세계의 진실과, 그 책을 경전으로 믿는 사람과 마주했습니다. 체험판은 여기까지예요.', next:'최종장 「건국제」 (제작 중)' },
+    5:{ title:'진실을 말하다', body:'책 속 세계의 진실과, 그 책을 경전으로 믿는 사람과 마주했습니다. ', next:'최종장 「건국제」' },
   };
   function showDemoEnd(cmd={}){
     const S=Game.state, n=cmd.n||1, C=CLEAR[n]; autosave(`제${n}장 완료`);
