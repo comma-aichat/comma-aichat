@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>아이돌 체험</title>
+<style>
+/* Layout: native-messenger column — top bar · chat (fans left with avatar, me right in my color) · input bar with + tray. Settings and letters open as full pages; item actions use bottom action sheets. */
+:root{
+  --accent:#ff4f86;
+  --on-accent:#ffffff;
+  --accent-ink:color-mix(in oklab, var(--accent) 80%, #141416);
+  --chat:#f2f3f5;
+  --bar:#ffffff;
+  --surface:#ffffff;
+  --page:#f2f2f6;
+  --ink:#141416;
+  --muted:#8b8c95;
+  --line:#e3e4e9;
+  --seg:#e9e9ee;
+  --seg-on:#ffffff;
+  --stage:#e4e5ea;
+  --danger:#e5484d;
+  --av-bg:86%;
+  --sil:#b4b6be;
+  --shadow:0 4px 16px rgba(0,0,0,.12);
+  --f:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --accent-ink:color-mix(in oklab, var(--accent) 72%, #ffffff);
+    --chat:#0e0e10;
+    --bar:#18181b;
+    --surface:#26262b;
+    --page:#0e0e10;
+    --ink:#f2f2f5;
+    --muted:#8f909a;
+    --line:#2c2c32;
+    --seg:#2a2a30;
+    --seg-on:#4a4a53;
+    --stage:#050506;
+    --danger:#ff6369;
+    --av-bg:30%;
+    --sil:#5c5d66;
+    --shadow:0 4px 16px rgba(0,0,0,.55);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --accent-ink:color-mix(in oklab, var(--accent) 72%, #ffffff);
+  --chat:#0e0e10;
+  --bar:#18181b;
+  --surface:#26262b;
+  --page:#0e0e10;
+  --ink:#f2f2f5;
+  --muted:#8f909a;
+  --line:#2c2c32;
+  --seg:#2a2a30;
+  --seg-on:#4a4a53;
+  --stage:#050506;
+  --danger:#ff6369;
+  --av-bg:30%;
+  --sil:#5c5d66;
+  --shadow:0 4px 16px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%}
+body{height:100%;background:var(--bar);color:var(--ink);font-family:var(--f);font-size:15px;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+@media (min-width:600px){body{background:var(--stage)}}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{position:relative;height:100%;max-width:480px;margin-inline:auto;display:flex;flex-direction:column;background:var(--chat);overflow:hidden}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line)}}
+
+/* top bar */
+.top{flex:none;display:flex;align-items:center;gap:10px;height:58px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bar);border-bottom:1px solid var(--line)}
+.me-face{flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:16px}
+.me-face img,.face img{width:100%;height:100%;object-fit:cover}
+.who{flex:1;min-width:0}
+.nm{font-size:16.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{margin-top:1px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.ibtn{position:relative;flex:none;width:40px;height:40px;margin-right:-6px;border:0;border-radius:50%;background:none;display:grid;place-items:center}
+.ibtn svg{width:24px;height:24px}
+.badge{position:absolute;top:3px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;font-variant-numeric:tabular-nums}
+
+/* chat */
+.stream{position:relative;flex:1;min-height:0;display:flex}
+.list{flex:1;min-width:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;padding-block:12px 16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.day{align-self:center;margin-block:6px 2px;padding:4px 12px;border-radius:999px;background:color-mix(in oklab,var(--ink) 6%,transparent);font-size:12px;color:var(--muted)}
+.sys{align-self:center;max-width:88%;padding:7px 12px;border-radius:12px;background:color-mix(in oklab,var(--ink) 5%,transparent);text-align:center;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.row{animation:pop .2s ease-out}
+.row.still{animation:none}
+@keyframes pop{from{opacity:.2;transform:translateY(5px)}to{opacity:1;transform:none}}
+.fan{min-width:0}
+.fname{margin:0 0 4px 2px;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fname span{cursor:pointer}
+.fline{display:flex;align-items:flex-end;gap:5px;min-width:0}
+.fb{min-width:0;max-width:calc(100% - 54px);padding:8px 12px;border-radius:4px 16px 16px 16px;background:var(--surface);font-size:15px;line-height:1.45;overflow-wrap:anywhere;cursor:pointer}
+.fb:active{filter:brightness(.95)}
+.tm{flex:none;padding-bottom:1px;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.me{display:flex;justify-content:flex-end;align-items:flex-end;gap:5px}
+.side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:1px;padding-bottom:1px;cursor:pointer}
+.rc{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.rc svg{width:11px;height:11px}
+.stack{min-width:0;max-width:76%;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.ib{max-width:100%;padding:8px 12px;border-radius:16px 4px 16px 16px;background:var(--accent);color:var(--on-accent);font-size:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer}
+.ib:active{filter:brightness(.95)}
+.ib.vb{padding:6px 12px 6px 6px}
+.tx{display:block}
+.vb .tx{padding:6px 0 2px 6px}
+.pic{display:block;width:100%;max-width:240px;max-height:320px;object-fit:cover;border-radius:14px;background:var(--seg);cursor:zoom-in}
+video.pic{object-fit:contain;background:#000;cursor:auto}
+.qt{display:block;margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid color-mix(in oklab,var(--on-accent) 30%,transparent);font-size:12.5px;line-height:1.4;white-space:normal}
+.qt b{display:block;font-size:12px;font-weight:600;opacity:.9}
+.qt span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;opacity:.85}
+.chip{display:inline-block;padding:0 6px;margin:0 1px;border-radius:6px;background:color-mix(in oklab,var(--on-accent) 24%,transparent);font-size:.92em;font-weight:600;white-space:nowrap}
+.voice{display:flex;align-items:center;gap:9px;min-width:190px}
+.play{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--on-accent);color:var(--accent);display:grid;place-items:center}
+.play svg{width:16px;height:16px}
+.bars{flex:1;display:flex;align-items:center;gap:2px;height:26px}
+.bars i{display:block;width:3px;border-radius:2px;background:color-mix(in oklab,var(--on-accent) 42%,transparent)}
+.bars i.on{background:var(--on-accent)}
+.vdur{font-size:12px;font-variant-numeric:tabular-nums;opacity:.9}
+.gone{display:block;padding:10px 12px;border-radius:14px;background:var(--seg);font-size:13px;color:var(--muted)}
+.newpill{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;padding:8px 14px;border:0;border-radius:999px;background:var(--bar);color:var(--accent-ink);font-size:13px;font-weight:600;box-shadow:var(--shadow);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* input bar */
+.composer{flex:none;padding-block:7px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bar);border-top:1px solid var(--line)}
+.inrow{display:flex;align-items:flex-end;gap:8px}
+.plus{flex:none;width:36px;height:36px;margin:0 0 3px -6px;border:0;border-radius:50%;background:none;color:var(--muted);display:grid;place-items:center;transition:transform .15s}
+.plus svg{width:26px;height:26px}
+.plus[aria-expanded="true"]{transform:rotate(45deg);color:var(--ink)}
+.field{flex:1;min-width:0;display:flex;border-radius:20px;background:var(--seg)}
+#msg{flex:1;min-width:0;height:42px;max-height:124px;padding:10px 14px;border:0;background:transparent;resize:none;outline:none;font-size:16px;line-height:1.35}
+#msg::placeholder{color:var(--muted)}
+.send{flex:none;width:36px;height:36px;margin-bottom:3px;border:0;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center}
+.send svg{width:19px;height:19px}
+.send:disabled{background:var(--seg);color:var(--muted);cursor:default}
+.tray{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px;padding:16px 0 8px}
+.tile{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:12px}
+.tile i{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--seg)}
+.tile i svg{width:24px;height:24px}
+.qbar,.attach{display:flex;align-items:center;gap:10px;margin-bottom:7px;padding:7px 7px 7px 12px;border-radius:12px;background:var(--seg);font-size:12.5px}
+.qtxt{flex:1;min-width:0}
+.qtxt b{display:block;font-size:12px;font-weight:600;color:var(--accent-ink)}
+.qtxt span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.attach img,.attach video{flex:none;width:44px;height:44px;border-radius:8px;object-fit:cover}
+.attach .wv{flex:none;width:44px;height:44px;border-radius:8px;background:var(--bar);display:grid;place-items:center}
+.attach .wv svg{width:20px;height:20px}
+.x{flex:none;width:28px;height:28px;border:0;border-radius:50%;background:var(--bar);display:grid;place-items:center}
+.x svg{width:14px;height:14px}
+
+/* action sheet */
+.as-wrap{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;justify-content:flex-end}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.4);animation:fade .18s}
+.as{position:relative;display:flex;flex-direction:column;gap:8px;padding-block:8px 10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));animation:up .22s cubic-bezier(.2,.9,.3,1)}
+.as-g{border-radius:14px;overflow:hidden;background:var(--bar)}
+.as-h{padding:13px 16px;border-bottom:1px solid var(--line);text-align:center;font-size:13px;color:var(--muted)}
+.as-h b{display:block;font-weight:600}
+.as-h span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}
+.as-b{display:block;width:100%;height:54px;border:0;border-top:1px solid var(--line);background:none;font-size:17px}
+.as-g>.as-b:first-child,.as-h+.as-b{border-top:0}
+.as-b.red{color:var(--danger)}
+.as-b.cancel{font-weight:600}
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(30px);opacity:.4}}
+
+/* pages */
+.page{position:absolute;inset:0;z-index:25;display:flex;flex-direction:column;background:var(--page);animation:slide .22s ease-out}
+.page.noanim{animation:none}
+@keyframes slide{from{transform:translateX(28px);opacity:.4}}
+.ph{flex:none;height:52px;display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bar);border-bottom:1px solid var(--line)}
+.ph h2{margin:0;text-align:center;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl,.pr{height:44px;padding:0;border:0;background:none;display:flex;align-items:center;font-size:16px}
+.pl svg{width:26px;height:26px;margin-left:-7px}
+.pr{justify-content:flex-end;font-weight:600;color:var(--accent-ink)}
+.pbody{flex:1;overflow-y:auto;overscroll-behavior:contain;padding-block:6px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.pfoot{flex:none;padding-block:10px 12px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--page)}
+.intro{margin:14px 4px 0;font-size:14px;line-height:1.55;color:var(--muted);text-align:center}
+.glabel{margin:22px 4px 7px;font-size:13px;color:var(--muted)}
+.gnote{margin:7px 4px 0;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.gnote.warn{color:var(--danger)}
+.cells{border-radius:12px;overflow:hidden;background:var(--surface)}
+.cell{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 16px;border:0;border-top:1px solid var(--line);background:none;text-align:left;font-size:16px}
+.cells>.cell:first-child{border-top:0}
+.ck{flex:none;width:68px}
+.cv{flex:1;min-width:0;height:48px;border:0;background:none;outline:none;font-size:16px}
+.cv::placeholder{color:var(--muted)}
+.grow{flex:1;min-width:0}
+.val{color:var(--muted);font-size:15px;font-variant-numeric:tabular-nums}
+.cell.red{color:var(--danger)}
+.mini{flex:none;padding:6px 11px;border:0;border-radius:999px;background:var(--seg);font-size:13px}
+.avwrap{display:flex;justify-content:center;padding-top:18px}
+.avbig{position:relative;width:96px;height:96px;cursor:pointer}
+.face{width:100%;height:100%;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);font-size:36px;font-weight:700}
+.cam{position:absolute;right:0;bottom:0;width:30px;height:30px;border-radius:50%;background:var(--surface);display:grid;place-items:center;box-shadow:0 0 0 1px var(--line),var(--shadow)}
+.cam svg{width:16px;height:16px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:2px;border-radius:10px;background:var(--seg)}
+.seg label{position:relative;display:block}
+.seg input,.sw input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:grid;place-items:center;height:34px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
+.seg input:checked+span{background:var(--seg-on);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.seg input:focus-visible+span,.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:1px}
+.sw{display:flex;flex-wrap:wrap;gap:12px;padding:13px 16px}
+.sw label{position:relative;display:block}
+.sw span{display:block;width:30px;height:30px;border-radius:50%;background:var(--c);cursor:pointer}
+.sw input:checked+span{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c)}
+.custom{position:relative;width:30px;height:30px;border-radius:50%;overflow:hidden;cursor:pointer;background:conic-gradient(#ff4f6d,#ffb300,#4cd964,#2ec5ff,#7b61ff,#ff4f6d)}
+.custom.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.custom input{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;cursor:pointer}
+.toggle{appearance:none;-webkit-appearance:none;flex:none;position:relative;width:50px;height:30px;margin:0;border-radius:15px;background:var(--seg);cursor:pointer;transition:background .15s}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.toggle:checked{background:var(--accent)}
+.toggle:checked::after{transform:translateX(20px)}
+.btn{width:100%;height:52px;border:0;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:16.5px;font-weight:600}
+.lcell{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:0;border-top:1px solid var(--line);background:none;text-align:left}
+.cells>.lcell:first-child{border-top:0}
+.lmain{flex:1;min-width:0}
+.ln{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600}
+.lcell.new .ln::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--danger)}
+.lp{margin-top:2px;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ldate{flex:none;align-self:flex-start;margin-top:2px;font-size:12px;color:var(--muted)}
+.lhead{display:flex;align-items:center;gap:12px;margin:16px 4px 12px}
+.lhead b{display:block;font-size:15px}
+.lhead span{font-size:12.5px;color:var(--muted)}
+.lcard{padding:20px 18px;border-radius:14px;background:var(--surface);font-size:16px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.empty{padding:40px 0;text-align:center;font-size:14px;color:var(--muted)}
+
+.toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);z-index:60;max-width:calc(100% - 32px);padding:10px 16px;border-radius:12px;background:rgba(32,32,36,.92);color:#fff;font-size:13.5px;text-align:center}
+.lb{position:absolute;inset:0;z-index:70;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.92);cursor:zoom-out}
+.lb img{max-width:100%;max-height:100%;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <div class="me-face" id="hFace"></div>
+    <div class="who">
+      <div class="nm" id="hName">하린</div>
+      <div class="sub" id="hSub">구독자</div>
+    </div>
+    <button class="ibtn" id="bLetters" type="button" aria-label="편지함">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>
+      <span class="badge" id="lBadge" hidden>0</span>
+    </button>
+    <button class="ibtn" id="bSettings" type="button" aria-label="설정">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </header>
+
+  <div class="stream">
+    <main class="list" id="list" role="log" aria-live="off" aria-label="채팅"></main>
+    <button class="newpill" id="newpill" type="button" hidden>새 답장 <b id="newN">0</b>개 ↓</button>
+  </div>
+
+  <footer class="composer">
+    <div class="qbar" id="qbar" hidden></div>
+    <div class="attach" id="attach" hidden></div>
+    <div class="inrow">
+      <button class="plus" id="bPlus" type="button" aria-label="첨부" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      <div class="field"><textarea id="msg" rows="1" placeholder="메시지 입력" aria-label="메시지"></textarea></div>
+      <button class="send" id="send" type="button" aria-label="보내기" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+    </div>
+    <div class="tray" id="tray" hidden>
+      <button class="tile" type="button" id="tAlbum"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg></i>앨범</button>
+      <button class="tile" type="button" id="tVoice"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></i>음성</button>
+      <button class="tile" type="button" id="tName"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.3-7 8-7s7 2.5 8 7"/></svg></i>팬 이름</button>
+    </div>
+    <input type="file" id="fMedia" accept="image/*,video/*" hidden>
+    <input type="file" id="fVoice" accept="audio/*" hidden>
+  </footer>
+
+  <section class="page" id="page" hidden>
+    <div class="ph"><button class="pl" id="pgLeft" type="button" aria-label="뒤로"></button><h2 id="pgTitle"></h2><button class="pr" id="pgRight" type="button"></button></div>
+    <div class="pbody" id="pgBody"></div>
+    <div class="pfoot" id="pgFoot" hidden></div>
+  </section>
+
+  <div class="as-wrap" id="asWrap" hidden><div class="scrim" id="asScrim"></div><div class="as" id="as" role="dialog" aria-modal="true"></div></div>
+  <div class="lb" id="lb" hidden><img alt="크게 보기"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const R = Math.random;
+const pick = a => a[Math.floor(R() * a.length)];
+const rint = (a, b) => a + Math.floor(R() * (b - a + 1));
+const uid = () => Date.now().toString(36) + R().toString(36).slice(2, 7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const firstChar = s => Array.from(String(s || '?'))[0];
+const NAME_TOKEN = '{팬이름}';
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+/* ---------- media in IndexedDB ---------- */
+const media = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise(res => {
+    try {
+      const r = indexedDB.open('daheum-media', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('m');
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => res(null);
+      r.onblocked = () => res(null);
+    } catch (e) { res(null); }
+  }));
+  const run = async (mode, fn) => {
+    const db = await open(); if (!db) return null;
+    try {
+      return await new Promise(res => {
+        const tx = db.transaction('m', mode); const st = tx.objectStore('m');
+        let out = null; const q = fn(st);
+        if (q) q.onsuccess = () => { out = q.result; };
+        tx.oncomplete = () => res(out); tx.onerror = () => res(null); tx.onabort = () => res(null);
+      });
+    } catch (e) { return null; }
+  };
+  return {
+    put: (id, blob) => run('readwrite', st => st.put(blob, id)),
+    get: id => run('readonly', st => st.get(id)),
+    del: id => run('readwrite', st => st.delete(id)),
+    clear: () => run('readwrite', st => st.clear())
+  };
+})();
+const urlCache = new Map();
+async function getURL(id) {
+  if (urlCache.has(id)) return urlCache.get(id);
+  const b = await media.get(id);
+  if (!b) return null;
+  const u = URL.createObjectURL(b); urlCache.set(id, u); return u;
+}
+
+/* ---------- helpers ---------- */
+function hasB(w) { if (!w) return false; const c = w.charCodeAt(w.length - 1); if (c < 0xAC00 || c > 0xD7A3) return false; return (c - 0xAC00) % 28 !== 0; }
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (const ch of String(s)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+const fmtN = n => Math.round(n).toLocaleString('ko-KR');
+const fmtSubs = n => n >= 10000 ? String(Math.round(n / 1000) / 10).replace(/\.0$/, '') + '만' : fmtN(n);
+const fmtDur = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const tfmt = new Intl.DateTimeFormat('ko-KR', { hour: 'numeric', minute: '2-digit' });
+const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+const dayLabel = t => new Date(t).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+const shortDate = t => dayKey(t) === dayKey(Date.now()) ? tfmt.format(t) : new Date(t).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+
+/* ---------- config ---------- */
+const SCALE = {
+  small: { label: '신인', subs: [1800, 4800], show: [22, 32], dur: 45000, idle: [9000, 22000], rate: [.10, .2] },
+  mid: { label: '대세', subs: [28000, 76000], show: [55, 75], dur: 65000, idle: [5000, 13000], rate: [.08, .15] },
+  big: { label: '월드스타', subs: [620000, 1400000], show: [110, 150], dur: 85000, idle: [2200, 6500], rate: [.05, .1] }
+};
+const COLORS = [['#ff4f86', '핑크'], ['#8b5cf6', '퍼플'], ['#2f7bf6', '블루'], ['#14b8a6', '민트'], ['#f5b301', '옐로'], ['#ff6a3d', '코랄'], ['#e11d48', '레드'], ['#5b6472', '그레이']];
+const DEF = { name: '하린', group: 'LUMÉRA', fandom: '루미', gender: 'f', color: '#ff4f86', scale: 'mid', ai: true, avatar: null, debuted: false };
+let cfg = Object.assign({}, DEF, store.get('dh.cfg', {}));
+let msgs = store.get('dh.msgs', []);
+let blocked = new Set(store.get('dh.blocked', []));
+let letters = store.get('dh.letters', []);
+let meta = Object.assign({ subs: 0, nextLetter: 0, nameTip: false }, store.get('dh.meta', {}));
+
+/* ---------- fans ---------- */
+const TYPES = { kid: 9, brat: 6, teenF: 22, teenM: 6, adultF: 27, adultM: 10, auntie: 9, intl: 7 };
+const TYPE_W = Object.values(TYPES).reduce((a, b) => a + b, 0);
+const ALL_TYPES = Object.keys(TYPES).concat('anti');
+const STYLE = { kid: 'polite', brat: 'brat', teenF: 'casual', teenM: 'casual', adultF: 'casual', adultM: 'polite', auntie: 'auntie', intl: 'intl', anti: 'anti' };
+const NAMES_F = [['서연', 'seoyeon'], ['지우', 'jiwoo'], ['하은', 'haeun'], ['민서', 'minseo'], ['수아', 'sua'], ['예린', 'yerin'], ['채원', 'chaewon'], ['다은', 'daeun'], ['유진', 'yujin'], ['지민', 'jimin'], ['서윤', 'seoyun'], ['나연', 'nayeon'], ['윤아', 'yoona'], ['예지', 'yeji'], ['수빈', 'subin'], ['지아', 'jia'], ['민지', 'minji'], ['유나', 'yuna'], ['지수', 'jisoo'], ['시은', 'sieun'], ['가은', 'gaeun'], ['아린', 'arin'], ['서현', 'seohyun'], ['혜원', 'hyewon'], ['소율', 'soyul'], ['다인', 'dain'], ['채은', 'chaeeun'], ['연우', 'yeonwoo']];
+const NAMES_M = [['도윤', 'doyun'], ['시우', 'siwoo'], ['준서', 'junseo'], ['예준', 'yejun'], ['은우', 'eunwoo'], ['지호', 'jiho'], ['민준', 'minjun'], ['서준', 'seojun'], ['현우', 'hyunwoo'], ['지훈', 'jihoon'], ['우진', 'woojin'], ['건우', 'gunwoo'], ['하준', 'hajun'], ['태윤', 'taeyun'], ['동현', 'donghyun'], ['성민', 'sungmin']];
+const SURN = [['김', 'kim'], ['이', 'lee'], ['박', 'park'], ['최', 'choi'], ['정', 'jung'], ['강', 'kang'], ['조', 'cho'], ['윤', 'yoon'], ['장', 'jang'], ['한', 'han'], ['임', 'lim'], ['신', 'shin']];
+const OLD_F = ['미경', '은정', '지영', '현숙', '정은', '수진', '미영', '선영', '혜경', '은주', '경희', '윤정', '숙희', '영미'];
+const CUTE = ['말랑이', '콩떡', '뽀짝', '먕먕', '몽글이', '쿠키', '모찌', '두부', '보리', '콩이', '치즈', '꾸꾸', '토리', '망고', '젤리', '호두', '밤톨이', '꼬미', '두두', '짱아', '감자', '솜뭉치', '쪼꼬', '뭉치'];
+const DECO = ['ෆ', '♡', '🎀', '⸝⸝', '♥︎', '💗', '🫧', 'ʚɞ', '˙ᵕ˙', '⋆', '🤍', '.'];
+const SHORTN = ['ㅇㅇ', 'ㅎㅎ', '.', '♡', '냥', 'ㅎ', 'ෆ', '..', 'ㅇ', '!', '-'];
+const STAT_T = ['시험끝나라', '고3인생', '야자싫어', '방학언제', '잠온다', '수학싫어', '덕질중', '숙제많음', '폰압수직전'];
+const STAT_A = ['갓생살자', '퇴근하고싶다', '월요일싫어', '다이어트중', '잠만보', '주말만기다림', '출근싫어', '커피중독', '오늘도야근', '칼퇴기원', '연차쓰고싶다'];
+const LATIN = ['luna', 'bella', 'camila', 'sofia', 'mia', 'yuki', 'sakura', 'nina', 'ana', 'maya', 'chloe', 'zoe', 'haru', 'lia', 'isa', 'emily', 'fern', 'aiko', 'linh', 'mel'];
+const PLACE = ['br', 'ph', 'id', 'mx', 'jp', 'fr', 'us', 'th', 'vn', 'cl'];
+
+function honFor(g) { return cfg.gender === 'm' ? (g === 'm' ? '형' : '오빠') : (g === 'm' ? '누나' : '언니'); }
+
+let pool = {}; let byId = new Map();
+function buildPool() {
+  const r = mulberry32(hashStr(cfg.name + '|' + cfg.group + '|' + cfg.gender));
+  const rp = a => a[Math.floor(r() * a.length)];
+  const ri = (a, b) => a + Math.floor(r() * (b - a + 1));
+  const wp = opts => { let t = 0; for (const o of opts) t += o[1]; let x = r() * t; for (const [f, w] of opts) { if ((x -= w) < 0) return f(); } return opts[0][0](); };
+  const n = cfg.name || '최애';
+  const ni = hasB(n) ? n + '이' : n;
+  const fd = cfg.fandom || '팬';
+  const yy = (a, b) => String(ri(a, b) % 100).padStart(2, '0');
+  const mmdd = () => String(ri(1, 12)).padStart(2, '0') + String(ri(1, 28)).padStart(2, '0');
+  const nickForm = k => { const s = k[0]; return wp([[() => s + s, 2], [() => s + '니', 1], [() => hasB(k) ? k + '이' : k, 3], [() => k, 4]]); };
+  const handle = rom => wp([[() => rom + '_', 2], [() => rom + yy(0, 10), 2], [() => rom + '.' + rom[0], 1], [() => '_' + rom, 1], [() => rom + '_' + mmdd(), 2], [() => rom + '__', 1], [() => rom + rp(['ii', 'yy', 'ee']), 1], [() => rom.slice(0, 3) + rom.slice(0, 3), 1]]);
+  pool = {}; byId = new Map();
+  const mk = (type, i) => {
+    let g = 'f';
+    if (type === 'teenM' || type === 'adultM') g = 'm';
+    else if (type === 'kid') g = r() < .72 ? 'f' : 'm';
+    else if (type === 'brat') g = r() < .55 ? 'f' : 'm';
+    else if (type === 'auntie') g = r() < .8 ? 'f' : 'm';
+    else if (type === 'anti') g = r() < .5 ? 'f' : 'm';
+    const h = honFor(g);
+    const [k, rom] = rp(g === 'm' ? NAMES_M : NAMES_F);
+    const [sk, srom] = rp(SURN);
+    let nick;
+    switch (type) {
+      case 'teenF': nick = wp([
+        [() => nickForm(k) + (r() < .4 ? rp(DECO) : ''), 30],
+        [() => handle(rom), 18],
+        [() => rp(CUTE) + (r() < .3 ? rp(DECO) : ''), 14],
+        [() => rp([`${n}꺼`, `${n}바라기`, `${n}만봐`, `${ni}♡`, `${fd} ${k}`, `${n} 지킴이`, `${n}${yy(0, 12)}`, `${ni}랑 평생`]), 20],
+        [() => rp(SHORTN), 6],
+        [() => rp(STAT_T), 12]]); break;
+      case 'adultF': nick = wp([
+        [() => nickForm(k) + (r() < .3 ? rp(DECO) : ''), 22],
+        [() => handle(rom), 14],
+        [() => rp(CUTE), 10],
+        [() => rp([`${n}꺼`, `${n}바라기`, `${fd} ${k}`, `${ni} 덕질중`, `${n}만봐`, `늦덕 ${k}`]), 14],
+        [() => rp(STAT_A), 14],
+        [() => rp([`${rp(CUTE)}집사`, `${rp(CUTE)}엄마`, `${rp(CUTE)}언니`]), 10],
+        [() => sk + k, 10],
+        [() => rp(SHORTN), 4]]); break;
+      case 'teenM': nick = wp([
+        [() => r() < .5 ? k : k + yy(7, 10), 30],
+        [() => handle(rom), 25],
+        [() => rp([`${n}${h}팬`, `${fd} ${k}`, `${n}${h} 응원`]), 12],
+        [() => rp(STAT_T.concat(['롤하는중', '축구하자', '피곤함'])), 15],
+        [() => rp(SHORTN), 10],
+        [() => sk + k, 8]]); break;
+      case 'adultM': nick = wp([
+        [() => sk + k, 35],
+        [() => rp([`${srom}.${rom}`, `${rom}_${srom}`, `${rom.slice(0, 2)}${yy(85, 99)}`, `${srom}${rom[0]}${rom[rom.length - 1]}`]), 20],
+        [() => rp(SHORTN), 12],
+        [() => rp(STAT_A.concat(['서울사는직장인', '조용히응원', '남팬입니다'])), 18],
+        [() => rp([`${fd}남팬`, `${n} 응원합니다`, `${fd} ${k}`]), 15]]); break;
+      case 'kid': nick = wp([
+        [() => hasB(k) ? k + '이' : k, 25],
+        [() => rp([`${n}${h}짱`, `${n}${h}최고`, `${n}${h}사랑해`, `${n}${h}♡`]), 20],
+        [() => k + (g === 'm' ? '왕자' : '공주'), 12],
+        [() => `초${ri(1, 6)} ${k}`, 13],
+        [() => rp(CUTE), 15],
+        [() => k + ri(10, 99), 15]]); break;
+      case 'brat': nick = wp([
+        [() => 'ㅋ'.repeat(ri(3, 7)), 8],
+        [() => k + 'ㅋ', 12],
+        [() => rom + ri(100, 999), 12],
+        [() => rp(['로블록스고수', '브롤만렙', '축구왕', '엄마폰', '1등', '급식왕', '똥', '숙제안함', '메롱', '방구대장', '마크장인']), 30],
+        [() => `${n}${h}바보`, 10],
+        [() => `초${ri(1, 3)}${k}`, 10],
+        [() => rp(SHORTN), 8]]); break;
+      case 'auntie': nick = g === 'm'
+        ? wp([[() => sk + k, 30], [() => `${n}삼촌`, 25], [() => `${rp(NAMES_F)[0]}아빠`, 25], [() => rp(['좋은날', '오늘도화이팅', '늘감사']), 20]])
+        : wp([
+          [() => `${rp(r() < .5 ? NAMES_F : NAMES_M)[0]}맘`, 28],
+          [() => (r() < .4 ? sk : '') + rp(OLD_F), 18],
+          [() => `${n}이모`, 16],
+          [() => rp(['행복한하루', '늘감사', '오늘도화이팅', '좋은날', '들꽃', '봄날', '해피맘', '감사합니다']), 22],
+          [() => rp(OLD_F) + yy(70, 85), 8],
+          [() => rp(SHORTN), 8]]); break;
+      case 'intl': nick = rp(LATIN) + rp(['', '♡', `_${ri(1, 99)}`, '.ofc', '🌙', `_${rp(PLACE)}`, '.x', '<3']); break;
+      case 'anti': nick = wp([
+        [() => rp(SHORTN), 30],
+        [() => 'user' + ri(1000, 99999), 15],
+        [() => nickForm(k), 20],
+        [() => handle(rom), 15],
+        [() => rp(['솔직히', '지나가던', '구독해지예정', '그냥그럼', '팩트', '현실직시', '음']), 20]]); break;
+      default: nick = k;
+    }
+    const days = (type === 'kid' || type === 'brat') ? ri(1, 240) : ri(1, 1300);
+    return { fid: type + '-' + i, nick: Array.from(nick).slice(0, 16).join(''), type, g, days, hue: ri(0, 359) };
+  };
+  for (const [t, w] of Object.entries(TYPES)) { pool[t] = []; for (let i = 0; i < w * 4; i++) { const f = mk(t, i); pool[t].push(f); byId.set(f.fid, f); } }
+  pool.anti = []; for (let i = 0; i < 24; i++) { const f = mk('anti', i); pool.anti.push(f); byId.set(f.fid, f); }
+}
+function pickFan(type) {
+  const arr = pool[type] || pool.adultF;
+  for (let k = 0; k < 8; k++) { const f = pick(arr); if (!blocked.has(f.fid)) return f; }
+  return arr.find(f => !blocked.has(f.fid)) || null;
+}
+function rollType(anti) {
+  if (R() * 100 < anti) return 'anti';
+  let x = R() * TYPE_W;
+  for (const [k, w] of Object.entries(TYPES)) { if ((x -= w) < 0) return k; }
+  return 'adultF';
+}
+// anti rate changes every time: usually low, sometimes none, now and then a pile-on
+function rollAnti() { const r = R(); if (r < .12) return rint(14, 28); if (r < .42) return rint(0, 2); return rint(3, 9); }
+
+/* ---------- lines ---------- */
+const G = {
+  teenF: ['헐 {h} 왔다ㅠㅠㅠㅠ', '꺄아아아악 {h}!!!!', '{h} 보고 싶었어ㅠㅠㅠ', '실시간이다 미쳤다', '나 시험 기간인데 {h} 보고 힘낸다ㅠㅠ', '야자 중에 몰래 보는 중ㅋㅋㅋ', '{h} 사랑해 진짜 많이 많이', '답장 한 번만 해 주라ㅠㅠ 소원이야', '부둥부둥 우리 {ni}', '오늘 학교에서 친구랑 {h} 얘기만 했어ㅋㅋ', '{h} 목소리 듣고 싶다ㅠ', '아 진짜 너무 귀여워 어떡해', '{h} 오늘 하루 어땠어??', '알림 뜨자마자 달려옴', '이거 보려고 폰 압수 피해서 옴ㅋㅋㅋ', '{h}는 존재 자체가 힐링이야', '{h} 오늘도 세상에서 제일 {ym}', 'ㅠㅠㅠㅠㅠㅠㅠ', '우리 {ni} 오늘도 반짝반짝해', '나 {fd} 된 지 벌써 1년 넘었어!!'],
+  teenM: ['{h} 오늘도 멋있다', 'ㄹㅇ 실시간이네', '저 남중 다니는데 {h} 찐팬입니다', '{h} 무대 영상 보면서 춤 연습 중이에요', '{h} 화이팅!!', '친구들한테 {g} 영업 성공함ㅋㅋ', '와 {h} 왔다'],
+  adultF: ['{h} 오늘 하루도 고생 많았어ㅠㅠ', '퇴근길에 {h} 메시지 보는 게 유일한 낙이야', '회사에서 몰래 보다가 웃음 참는 중ㅋㅋㅋ', '우리 {ni} 아프지 말고 다치지 말자', '부둥부둥 우쭈쭈 잘했어', '{h} 덕분에 월요병 사라짐', '오늘 야근인데 {h} 보고 버틴다', '아 너무 귀여워서 화가 난다 진짜', '{h} 늘 응원해 무리하지 마', '출근 지하철에서 광대 승천 중', '{h} 존재해 줘서 고마워', '하루의 끝에 {h가} 있어서 다행이야', '월급 다 {h}한테 쓰는 중ㅋㅋ', '{h} 오늘도 세상에서 제일 {ym}', '점심시간에 이거 보는 게 행복이다', '우리 {ni} 하고 싶은 거 다 해'],
+  adultM: ['{h} 오늘도 화이팅입니다', '출근 전에 {h} 메시지로 하루 시작합니다', '남팬도 많습니다 {h} 응원해요', '{h} 무대 보고 입덕했습니다', '와 실시간이네요 ㄷㄷ', '{h} 건강 꼭 챙기세요', '군대에서 {g} 노래로 버텼습니다', '딸이랑 같이 {h} 응원합니다', '{h} 오늘도 멋진 하루 보내세요', '{h} 늘 응원합니다!'],
+  kid: ['{h} 저 초3인데요 {h} 진짜 진짜 좋아해요!!!!!', '{h} 저 오늘 받아쓰기 100점 맞았어요ㅎㅎ', '엄마 폰으로 하고 있어요 {h} 안녕하세요!!', '{h} 저 {g} 노래 맨날 들어요🎵', '{h} 숙제하기 싫어요ㅠㅠ', '{h}!! 제 친구도 {h} 좋아하는데요 제가 더 좋아해요', '와 진짜 {h}다!!!!!!', '{h} 무슨 색 좋아해요?? 저는 핑크색이요', '{h} 오늘 급식에 돈가스 나왔어요ㅎㅎ', '학원 가기 싫어요 {h} 보면서 힘낼게요', '{h} 사랑해요 사랑해요 사랑해요 사랑해요', '{h} 저 장래희망이 아이돌이에요!!', '{h} 저 오늘 학교에서 {g} 춤 췄어요', '{h} 저 이 닦고 왔어요!!', '{h} 저 키 3cm 컸어요ㅎㅎ'],
+  brat: ['ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ', '1등!!!!!!!!!!', '{h} 나 초2임ㅋ', 'ㅎㅇㅎㅇㅎㅇㅎㅇㅎㅇ', '{h} 로블록스 해요??', '엄마 몰래 하는 중ㅋㅋ 들키면 끝남', '{h} 나랑 놀아 줘 놀아 줘 놀아 줘', 'ㅁㄴㅇㄹㅁㄴㅇㄹㅁㄴㅇㄹ', '{h} 답장 안 해 주면 울 거임ㅠㅠ 진짜임', '{h} 나 학원 땡땡이 침ㅋㅋ', '{h} 저 숙제 안 함 ㅋ', '{h}!!!!!!!!!!!!!!!!!!!!!!', '나 {h} 실물 봤음 (구라임)', '{h} 키 몇이에여', '{h} 브롤스타즈 하셈', '{h} 바보 메롱😝 장난임', '{h}{h}{h}{h}{h}{h}{h}{h}', '{h} 답장해 줘 답장해 줘 답장해 줘', '우리 반에서 {g} 모르는 애 없음', '{h} 나 오늘 선생님한테 혼남ㅠ', '{h} 내 동생도 {h} 좋대 근데 내가 더 좋음', '아 배고파 {h} 뭐 먹어요', 'ㅇㅅㅇ', '{h} 나 이빨 빠짐ㅋㅋㅋ'],
+  auntie: ['우리 {ni} 밥은 먹었니? {em}가 걱정돼서 그래', '아이고 우리 애기 왔어?', '{em}팬은 언제나 {ni} 편이야', '애들 재우고 이제 봤네~ {ni} 오늘도 수고했어', '부모 같은 마음으로 응원해 우리 {ni}', '딸이랑 같이 좋아해요ㅎㅎ', '{ni} 보면 그냥 마음이 따뜻해져', '우리 {ni} 하고 싶은 거 다 해~', '{em}가 앨범 10장 샀어ㅎㅎ', '우리 애기 오늘도 반짝반짝하네'],
+  intl: ['{n} I love you so much!! 💕 from Brazil', '사랑해요 {n}!! (learning korean for you)', '{jp}大好き！今日もお疲れ様🫶', 'omg {n} is online!!!', 'Te amo {n} 💜💜', '{n} please come to Manila 🥺', 'saranghae!!! greetings from Jakarta 🇮🇩', 'I woke up at 4am for this 😭', '{n} you are my comfort person 🥹', "je t'aime {n} ❤️ from Paris", '{jpk}😭'],
+  anti: ['요즘 메시지 성의 진짜 없네', '이거 보려고 돈 내는 거 아님ㅋ', '또 한 줄이야?', '인기 떨어진 거 체감되나 봄ㅋㅋ 열심히 하네', '탈덕함 ㅂㅂ 구독 해지하러 감', '라이브 실력이나 좀 늘었으면', '팬서비스 예전만 못하다 진짜', '이럴 시간에 연습이나 하지', '다른 아이돌이 훨씬 재밌던데', '솔직히 이번 노래 별로였음', '맨날 똑같은 말만 하네', '관심 받고 싶은가 봄ㅋ']
+};
+const C = {
+  greet: {
+    casual: ['안녕 {h}!!!!', '왔다왔다 {h} 왔다', '{h} 하이하이🖐', '나 완전 대기 타고 있었어', '{h} 안녕ㅠㅠ 반가워'],
+    polite: ['{h} 안녕하세요!!!!', '{h} 저 여기 있어요!!', '와 {h}다 안녕하세요ㅎㅎ'],
+    brat: ['{h} ㅎㅇ', 'ㅎㅇㅎㅇ 1등?', '안녕하세여!!!!!!'],
+    auntie: ['우리 {ni} 왔구나~ 반가워', '아이고 반가워라'],
+    intl: ['hiii {n}!!! 👋', '안녕 {n}!!']
+  },
+  food: {
+    casual: ['{h} 뭐 먹었어??', '밥 꼭 챙겨 먹어ㅠㅠ', '나도 지금 먹는 중ㅋㅋ 같이 먹자', '{h} 최애 메뉴 뭐야?', '메뉴 알려 줘 똑같은 거 시킬래', '맛있게 먹는 {h} 상상하니까 행복해', '나 방금 떡볶이 먹었어!!'],
+    polite: ['{h} 저는 떡볶이 먹었어요!!', '{h} 맛있게 드세요!!', '{h} 편식하면 안 돼요ㅋㅋ'],
+    brat: ['{h} 나는 라면 먹음 ㅋ', '나도 배고픔ㅠ', '{h} 피자 사 줘요'],
+    auntie: ['우리 {ni} 잘 먹어야 해~ {em}가 다 사 주고 싶다', '골고루 먹어 우리 애기'],
+    anti: ['먹는 얘기만 하네ㅋ'],
+    intl: ['eat well {n}!! 🍜', 'ご飯ちゃんと食べてね🍙']
+  },
+  sleep: {
+    casual: ['잘 자 {h}ㅠㅠ 꿈에서 만나', '벌써 가?ㅠㅠ 조금만 더 있다 가', '굿밤🌙', '푹 자고 내일 봐!!', '자장자장 우리 {ni}', '나도 {h} 생각하면서 잘게'],
+    polite: ['{h} 안녕히 주무세요!!', '{h} 저도 이제 자야 돼요 잘 자요🌙', '{h} 좋은 꿈 꾸세요!!'],
+    brat: ['자지 마 자지 마 자지 마', '{h} 벌써 자요?? 나는 안 잘 거임', '나 아직 안 졸림ㅋ'],
+    auntie: ['우리 애기 푹 자~ 이불 잘 덮고', '잘 자렴 우리 {ni}'],
+    anti: ['벌써 가냐 성의 없네'],
+    intl: ['good night {n} 🌙', 'おやすみ〜💤']
+  },
+  tired: {
+    casual: ['{h} 무리하지 마ㅠㅠ', '오늘 진짜 고생했어 부둥부둥', '푹 쉬어 우리 {ni}', '힘들 땐 {fd}한테 기대도 돼ㅠ', '{h} 아프지 마ㅠㅠㅠ 마음 아파', '토닥토닥 진짜 수고 많았어'],
+    polite: ['{h} 힘내세요!!! 제가 응원할게요', '{h} 아프지 마세요ㅠㅠ', '{h} 푹 쉬세요!!'],
+    brat: ['{h} 힘내셈 ㅋ', '나도 피곤함 학교 때문에'],
+    auntie: ['아이고 우리 애기 얼마나 힘들었을까', '{em}가 안아 주고 싶다 푹 쉬어'],
+    anti: ['다들 힘들어요ㅋ'],
+    intl: ['please rest well {n} 🥺', '無理しないでね😢']
+  },
+  love: {
+    casual: ['나도 보고 싶어ㅠㅠㅠ', '나도 사랑해!!!!!!', '헐 심장 아파', '방금 소리 질렀어ㅋㅋㅋ', '{h}보다 내가 더 보고 싶었거든ㅠㅠ', '나도 고마워 진짜로'],
+    polite: ['저도 사랑해요!!!!!', '저도 보고 싶어요ㅠㅠ', '{h} 저도 고마워요!!'],
+    brat: ['나도 사랑함 ㅋㅋ', '헐 나한테 한 말임?'],
+    auntie: ['{em}도 사랑해 우리 {ni}', '고맙긴~ 우리가 더 고맙지'],
+    anti: ['또 사랑 타령'],
+    intl: ['I love you more {n}!!! 😭💕', '大好きだよ〜💗']
+  },
+  work: {
+    casual: ['연습 화이팅!!', '무대 기대할게!!!', '다치지 않게 조심해ㅠ', '{h} 노력하는 거 다 알아', '끝나고 꼭 맛있는 거 먹어', '{h} 무대는 늘 최고야'],
+    polite: ['{h} 연습 화이팅이에요!!', '{h} 무대 꼭 볼게요!!'],
+    brat: ['{h} 춤 알려 줘요', '나도 춤 잘 춤 ㅋ'],
+    auntie: ['열심히 하는 거 {em}가 다 알아~', '무리하지 말고 쉬엄쉬엄 해'],
+    anti: ['연습 좀 더 해야 할 듯'],
+    intl: ['fighting {n}!!! 💪', "can't wait for the stage!!"]
+  },
+  comeback: {
+    casual: ['헐 스포 미쳤다', '컴백 언제야ㅠㅠ', '벌써 기대돼서 잠 못 자', '앨범 10장 산다 진짜', '티저 언제 나와??', '{h} 스포 더 해 줘ㅠㅠ'],
+    polite: ['{h} 신곡 기대돼요!!!', '{h} 앨범 용돈 모아서 살게요!!'],
+    brat: ['컴백 언제임?????', '스포 더 해 줘요'],
+    auntie: ['{em}가 앨범 많이 살게~'],
+    anti: ['이번엔 좀 제대로 나오나 보자'],
+    intl: ['COMEBACK?!?! 😱', "I'm so ready!!!"]
+  },
+  weather: {
+    casual: ['{h} 따뜻하게 입어ㅠ', '여기도 비 와ㅠ', '감기 조심해 진짜', '날씨 진짜 이상해ㅠㅠ', '{h} 우산 챙겼어?'],
+    polite: ['{h} 감기 조심하세요!!', '{h} 옷 따뜻하게 입으세요!!'],
+    brat: ['우리 동네는 맑음ㅋ'],
+    auntie: ['우리 애기 감기 걸리면 안 돼~ 따뜻하게 입어'],
+    intl: ['stay warm {n}!! ❄️']
+  },
+  question: {
+    casual: ['응응!!', '나는 완전 좋아!', '당연하지!!', '음 고민된다ㅋㅋ', '{h가} 좋으면 다 좋아', '헐 나도 궁금했어'],
+    polite: ['네!!!', '좋아요!!', '저는 완전 좋아요!!'],
+    brat: ['몰?루', 'ㅇㅇ', '아니ㅋ', '맞음 맞음'],
+    auntie: ['그럼~ 당연하지'],
+    intl: ['yesss!!', 'うん！']
+  },
+  sad: {
+    casual: ['{h} 무슨 일 있어?ㅠㅠ', '{fd}가 옆에 있어', '울지 마ㅠㅠㅠ 마음 아파', '기분 풀릴 때까지 여기 있을게'],
+    polite: ['{h} 힘내세요ㅠㅠ 제가 있잖아요', '{h} 슬퍼하지 마세요ㅠㅠ'],
+    brat: ['{h} 울지 마요ㅠ 내가 웃겨 줌'],
+    auntie: ['우리 애기 무슨 일이야ㅠ {em}가 안아 줄게'],
+    intl: ["we're here for you {n} 🫂"]
+  },
+  happy: {
+    casual: ['{h가} 행복하면 나도 행복해', '기분 좋아 보여서 다행이다ㅠㅠ', '오늘 좋은 일 있었어??', '행복해라 우리 {ni}'],
+    polite: ['{h가} 행복해서 저도 좋아요!!'],
+    brat: ['나도 기분 좋음ㅋㅋ'],
+    auntie: ['우리 애기 행복하면 {em}도 행복해'],
+    intl: ['happy {n} makes me happy!! 🥹']
+  },
+  photo: {
+    casual: ['사진 미쳤다', '얼굴 천재 인정', '배경화면 바로 저장함', '이 사진 평생 간직할게', '셀카 장인', '오늘 착장 뭐야 너무 {ym}', '와 이 각도 뭐야ㅠㅠ', '사진 한 장으로 일주일 버틸 수 있음'],
+    polite: ['{h} 사진 너무 {ymp}!!!', '{h} 저 이 사진 저장할게요!!'],
+    brat: ['사진 ㅋㅋㅋㅋ 표정 뭐임', '저장함 ㅋ 프사 할 거임', '{h} 이거 어디예요??'],
+    auntie: ['아이고 우리 애기 사진 잘 나왔네~ {em} 바탕화면 했어'],
+    anti: ['보정 너무 한 거 아님?', '사진 맨날 비슷하네'],
+    intl: ['THIS PHOTO 😭😭', '{jpk}📸']
+  },
+  video: {
+    casual: ['영상 무한 반복 중', '움직이는 {h} 미쳤다', '소장 완료', '몇 번째 보는지 모르겠어ㅋㅋ'],
+    polite: ['{h} 영상 100번 볼게요!!'],
+    brat: ['영상 ㅋㅋㅋ 또 보내 주세여', '10번 봄'],
+    auntie: ['영상 보니까 더 반갑네~'],
+    anti: ['화질 왜 이럼'],
+    intl: ['I watched it 20 times already 😭']
+  },
+  voice: {
+    casual: ['목소리 미쳤다ㅠㅠ', '이어폰 끼고 10번 들음', '자기 전에 계속 들을래', '목소리 들으니까 살 것 같아', '목소리 소장 완료'],
+    polite: ['{h} 목소리 너무 좋아요!!!'],
+    brat: ['목소리 이상함ㅋㅋ 장난임 좋음', '또 해 줘요!!!'],
+    auntie: ['목소리 들으니까 {em} 마음이 놓인다~'],
+    anti: ['목소리 좀 쉰 거 같은데'],
+    intl: ['your voice 😭😭 so comforting']
+  },
+  name: {
+    casual: ['헐 내 이름 불렀어ㅠㅠㅠㅠ', '이름 불러 줘서 고마워 캡처함', '{h가} 내 이름 부르는 거 실화냐', '내 이름이 이렇게 예쁜 이름이었나', '이름 불렸다 오늘 일진 대박'],
+    polite: ['{h가} 제 이름 불러 줬어요!!!!!', '엄마 {h가} 내 이름 불렀어!!!!'],
+    brat: ['내 이름 불렀다ㅋㅋ 개좋아', '나도 불러 줘!!! 나도!!!'],
+    auntie: ['{em} 이름도 불러 주네~ 고마워 우리 {ni}'],
+    anti: ['이름 불러 주는 걸로 퉁치냐'],
+    intl: ['{n} said my name!!! 😭']
+  },
+  quoteTarget: {
+    casual: ['헐 미쳤다 나한테 답장해 줬어ㅠㅠㅠㅠㅠ', '잠깐만 나야?? 나 맞아???', '평생 자랑할 거야 진짜로ㅠㅠ', '손 떨려서 타자가 안 쳐져ㅠㅠ', '캡처했어 액자에 걸 거야'],
+    polite: ['{h가} 저한테 답장해 줬어요!!!!! 엄마!!!!!', '{h} 고마워요ㅠㅠㅠ 평생 기억할게요'],
+    brat: ['헐 대박 나 답장 받음!!!!!! 엄마!!!!!!!', 'ㄹㅇ? ㄹㅇ?? 나한테??', '친구들한테 자랑할 거임ㅋㅋㅋ'],
+    auntie: ['어머 {em}한테 답장을? 고마워 우리 애기ㅠㅠ'],
+    intl: ['OMG {n} REPLIED TO ME 😭😭😭'],
+    anti: ['…답장해 줄 줄은 몰랐네', '아 뭐야 갑자기 미안해지네', 'ㅋ 알겠어 구독 연장함']
+  },
+  quoteOthers: {
+    casual: ['헐 누가 저런 말 했어ㅋㅋㅋ', '저거 나야?? 나 아니야??', '혹시 나인가 했는데 아니네ㅠ', '아 나도 저 말 할걸', '{h} 나한테도 답장해 줘ㅠㅠ', '답장 받은 사람 진짜 좋겠다', '저거 보낸 사람 오늘 잠 못 잘 듯ㅋㅋ'],
+    polite: ['{h} 저한테도 답장해 주세요ㅠㅠ', '저도 저 말 하려고 했는데!!'],
+    brat: ['저거 나임 (아님)', '나도!!!! 나도!!!!', '{h} 나는??'],
+    auntie: ['누군지 몰라도 좋겠다~'],
+    anti: ['답장 몰빵 오지네', '편애 심하다ㅋ'],
+    intl: ['who sent that?? so lucky 😭', '{n} reply to me too 🥺']
+  },
+  idle: {
+    casual: ['{h} 언제 와ㅠㅠ', '메시지 기다리는 중', '보고 싶다', '{h} 뭐 해?', '오늘 {g} 노래만 들음', '{h} 생각하면서 공부 중', '알림 켜 놓고 대기 중'],
+    polite: ['{h} 언제 와요?ㅠㅠ', '{h} 보고 싶어요!!'],
+    brat: ['{h} 언제 와요 심심함', '{h} ㅎㅇ', '{h} 놀아 줘'],
+    auntie: ['우리 {ni} 바쁜가 보다~ 기다릴게'],
+    intl: ['waiting for {n} 🥺'],
+    anti: ['오늘도 안 오네ㅋ']
+  }
+};
+const CATS = [
+  ['greet', /안녕|하이|ㅎㅇ|왔어|왔다|뭐 ?해|반가|굿모닝|좋은 아침/],
+  ['food', /밥|먹|배고|맛있|점심|저녁|아침|간식|야식|라면|커피|떡볶이|치킨/],
+  ['sleep', /잘 ?자|자야|졸려|졸리|굿밤|자러|잠|꿈/],
+  ['tired', /피곤|힘들|지쳐|지친|아파|아프|힘드|쉬고/],
+  ['love', /사랑|좋아해|보고 ?싶|고마워|고맙|최고야/],
+  ['work', /연습|녹음|촬영|스케줄|리허설|무대|공연|콘서트|팬싸|음방|안무/],
+  ['comeback', /컴백|앨범|신곡|스포|티저|뮤비|타이틀|발매/],
+  ['weather', /비 ?와|비가|날씨|춥|추워|더워|덥|눈 ?와|눈이|바람/],
+  ['question', /\?|？|뭐야|어때|할까|궁금/],
+  ['sad', /우울|슬퍼|속상|눈물|울었|외로|힘이 안/],
+  ['happy', /행복|신나|기뻐|기분 좋|좋은 하루|설레/]
+];
+const detectCats = t => CATS.filter(([, re]) => re.test(t || '')).map(([k]) => k);
+
+const LET = {
+  casual: {
+    open: ['{h}, 안녕! 나 {nick야}.', '사랑하는 {ni}에게.', '{h}, 오늘은 편지로 인사해!'],
+    mid: ['처음 {h} 무대를 본 날을 아직도 기억해. 그날 이후로 하루하루가 조금 더 반짝이게 됐어.', '요즘 할 일이 많아서 많이 지쳤는데, 자기 전에 {h} 메시지 보는 게 제일 큰 힘이 돼.', '시험 기간이라 힘들었는데 {g} 노래 들으면서 버텼어. 결과는 아직 모르지만 후회는 없어!', '무대 위에서 웃는 {h}를 보면 나도 모르게 따라 웃게 돼. 그 웃음 오래오래 지켜 주고 싶어.', '가끔 {h}도 힘든 날이 있을 텐데, 그럴 땐 {fd}가 있다는 거 꼭 기억해 줘.', '얼마 전에 친구한테 {h} 영업했는데 걔도 이제 {fd} 됐어ㅋㅋ'],
+    close: ['항상 건강하고 행복했으면 좋겠어. 늘 여기 있을게.', '오늘도 고생 많았어. 푹 자고 내일 또 만나!', '{h}의 모든 날을 응원해. 사랑해!']
+  },
+  polite: {
+    open: ['{h} 안녕하세요! 저는 {nick예요}.', '사랑하는 {h}에게'],
+    mid: ['저는 초등학교 {gr}학년이에요. {h} 노래를 매일매일 들어요.', '오늘 학교에서 {g} 춤을 췄는데 친구들이 잘한다고 했어요!', '저는 커서 {h}처럼 멋진 사람이 될 거예요.', '엄마가 숙제 다 하면 {h} 영상 보여 준다고 해서 숙제 다 했어요ㅎㅎ'],
+    close: ['{h} 아프지 말고 밥 많이 드세요! 사랑해요!', '꼭 또 메시지 보내 주세요!! 안녕히 계세요!']
+  },
+  brat: {
+    open: ['{h} 안녕 나 {nick야} ㅋㅋ', '{h}!!!! 편지임!!!!'],
+    mid: ['나 초2임. {g} 노래 맨날 부름. 엄마가 시끄럽대ㅋㅋ', '{h} 실물 보고 싶음. 콘서트 데려가 달라고 아빠한테 조를 거임', '내 친구들 다 {h} 좋아함. 근데 내가 1등임', '오늘 받아쓰기 50점 맞음 ㅋ 근데 괜찮음 {h} 있으니까'],
+    close: ['답장 안 해 주면 삐질 거임. 안녕!!', '{h} 사랑함 ㅋ 끝']
+  },
+  auntie: {
+    open: ['우리 {ni}에게.', '{n아}, {em}야~'],
+    mid: ['우리 애들 다 재우고 이렇게 편지를 써. {ni} 덕분에 요즘 하루가 즐거워.', '딸이랑 같이 {g} 무대를 보는데, 둘이서 소리 지르는 게 요즘 우리 집 일상이야.', '무대에서 열심히 하는 모습 보면 대견하고 또 짠해. 너무 무리하지 마.'],
+    close: ['밥 꼭 챙겨 먹고, 늘 건강하렴. {em}가 많이 응원해.', '우리 {ni}, 늘 지금처럼만 행복해~']
+  },
+  adultM: {
+    open: ['{h}, 안녕하세요. {fd} {nick}입니다.'],
+    mid: ['출퇴근길마다 {g} 노래를 듣습니다. 덕분에 힘든 날도 잘 버티고 있어요.', '남팬이라 표현을 잘 못하지만 늘 응원하고 있습니다.', '처음엔 친구 따라 무대를 봤는데 지금은 제가 더 열심히 챙겨 봅니다.'],
+    close: ['건강 꼭 챙기시고, 늘 응원하겠습니다.']
+  },
+  intl: {
+    open: ['Dear {n},'],
+    mid: ["I'm writing from far away, but my heart is always with you.", 'Your songs got me through a really hard year.', "I'm learning Korean so one day I can tell you this myself!"],
+    close: ['Please take care of yourself. 사랑해요! 💕']
+  }
+};
+const LSTYLE = { teenF: 'casual', adultF: 'casual', teenM: 'casual', kid: 'polite', brat: 'brat', auntie: 'auntie', adultM: 'adultM', intl: 'intl' };
+
+function fill(tpl, fan, ctx) {
+  const n = cfg.name || '최애';
+  const map = {
+    h: honFor(fan.g), n, ni: hasB(n) ? n + '이' : n, g: cfg.group || n, fd: cfg.fandom || '팬',
+    nick: fan.nick, qn: (ctx && ctx.quote && ctx.quote.nick) || '답장 받은 분',
+    em: fan.g === 'm' ? '삼촌' : '이모', gr: String(rint(1, 6)),
+    ym: cfg.gender === 'm' ? '멋있어' : '예뻐', ymp: cfg.gender === 'm' ? '멋있어요' : '예뻐요',
+    jp: n + (cfg.gender === 'm' ? 'くん' : 'ちゃん'), jpk: cfg.gender === 'm' ? 'かっこよすぎる' : 'かわいすぎる'
+  };
+  return tpl.replace(/\{(h|n|ni|g|fd|nick|qn|em|gr|ym|ymp|jp|jpk)(가|는|를|랑|아|야|예요|도)?\}/g, (_, k, p) => {
+    const w = map[k] == null ? '' : map[k];
+    if (!p) return w;
+    const b = hasB(w);
+    switch (p) {
+      case '가': return w + (b ? '이' : '가');
+      case '는': return w + (b ? '은' : '는');
+      case '를': return w + (b ? '을' : '를');
+      case '랑': return w + (b ? '이랑' : '랑');
+      case '아': return w + (b ? '아' : '야');
+      case '야': return w + (b ? '이야' : '야');
+      case '예요': return w + (b ? '이에요' : '예요');
+      default: return w + p;
+    }
+  });
+}
+function lineFor(cat, fan) { const s = C[cat]; if (!s) return null; const arr = s[STYLE[fan.type]]; return arr && arr.length ? pick(arr) : null; }
+function generic(fan) {
+  let t = pick(G[fan.type] || G.adultF);
+  if (fan.type === 'brat' && R() < .3) t += pick(['ㅋㅋㅋㅋ', '!!!!!!', ' ㅋ', '~~~']);
+  else if ((STYLE[fan.type] === 'casual' || fan.type === 'kid') && R() < .12 && !/[ㅠㅋ!]$/.test(t)) t += pick(['ㅠㅠ', 'ㅋㅋㅋ', '!!', ' 💗', ' 🥹', ' 🫶']);
+  return t;
+}
+
+/* ---------- DOM ---------- */
+const list = $('#list');
+const ta = $('#msg');
+const sendBtn = $('#send');
+const pill = $('#newpill');
+const SIL = '<svg viewBox="0 0 38 38" aria-hidden="true"><circle cx="19" cy="15.5" r="7" fill="currentColor"/><path d="M4.5 38c1.6-8.4 7.6-12 14.5-12s12.9 3.6 14.5 12z" fill="currentColor"/></svg>';
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>',
+  cam: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  wave: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/></svg>',
+  bubble: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.5 1.4 4.7 3.6 6.2L5 21.5l4.4-2.4c.8.2 1.7.3 2.6.3 5.5 0 10-3.6 10-8.2S17.5 3 12 3z"/></svg>'
+};
+
+/* ---------- accent ---------- */
+function lum(hex) {
+  let v = String(hex || '#ff4f86').replace('#', '');
+  if (v.length === 3) v = v.split('').map(x => x + x).join('');
+  const ch = [0, 2, 4].map(i => parseInt(v.substr(i, 2), 16) / 255).map(x => x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4));
+  return .2126 * ch[0] + .7152 * ch[1] + .0722 * ch[2];
+}
+function setAccent(c) {
+  c = c || cfg.color;
+  const L = lum(c);
+  const root = document.documentElement;
+  root.style.setProperty('--accent', c);
+  root.style.setProperty('--on-accent', 1.05 / (L + .05) >= (L + .05) / .061 ? '#ffffff' : '#1b1a1d');
+}
+const faceHTML = c => c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc(firstChar(c.name || '나'));
+
+/* ---------- rendering ---------- */
+let lastDay = '';
+function maybeDay(t, frag) {
+  const k = dayKey(t);
+  if (k !== lastDay) { lastDay = k; const d = document.createElement('div'); d.className = 'day'; d.textContent = dayLabel(t); frag.appendChild(d); }
+}
+const richText = t => esc(t).split(NAME_TOKEN).join('<span class="chip">팬 이름</span>');
+function voiceHTML(m) {
+  const r = mulberry32(hashStr(m.id)); let b = '';
+  for (let i = 0; i < 26; i++) b += `<i style="height:${6 + Math.round(r() * 18)}px"></i>`;
+  return `<div class="voice"><button class="play" type="button" aria-label="음성 재생" data-play="${esc(m.media)}">${ICON.play}</button><div class="bars">${b}</div><span class="vdur">${fmtDur(m.dur)}</span></div>`;
+}
+function makeEl(m, animate) {
+  const d = document.createElement('div');
+  d.dataset.id = m.id;
+  if (m.kind === 'sys') { d.className = 'sys'; d.textContent = m.text; return d; }
+  if (m.kind === 'fan') {
+    d.className = 'row fan' + (animate ? '' : ' still');
+    d.dataset.fid = m.fid;
+    d.innerHTML = `<div class="fname"><span>${esc(m.nick)}</span></div><div class="fline"><div class="fb" role="button" tabindex="0">${esc(m.text)}</div><span class="tm">${tfmt.format(m.t)}</span></div>`;
+    return d;
+  }
+  d.className = 'row me' + (animate ? '' : ' still');
+  let stack = '';
+  if (m.media && m.type === 'photo') stack += `<img class="pic" alt="보낸 사진" data-media="${esc(m.media)}">`;
+  if (m.media && m.type === 'video') stack += `<video class="pic" controls playsinline preload="metadata" data-media="${esc(m.media)}"></video>`;
+  let bub = '';
+  if (m.quote) bub += `<span class="qt"><b>팬에게 답장</b><span>${esc(m.quote.text)}</span></span>`;
+  if (m.media && m.type === 'voice') bub += voiceHTML(m);
+  if (m.text) bub += `<span class="tx">${richText(m.text)}</span>`;
+  if (bub) stack += `<div class="ib${m.type === 'voice' ? ' vb' : ''}" role="button" tabindex="0">${bub}</div>`;
+  d.innerHTML = `<div class="side" title="메시지 메뉴"><span class="rc">${ICON.bubble}<b>${fmtN(m.count || 0)}</b></span><span class="tm">${tfmt.format(m.t)}</span></div><div class="stack">${stack}</div>`;
+  hydrate(d, m);
+  return d;
+}
+function hydrate(d, m) {
+  const node = d.querySelector('[data-media]');
+  if (!node) return;
+  getURL(m.media).then(u => {
+    if (!u) { node.replaceWith(Object.assign(document.createElement('span'), { className: 'gone', textContent: '이 기기에서 지워진 파일이에요' })); return; }
+    const near = isNear();
+    node.addEventListener(node.tagName === 'IMG' ? 'load' : 'loadedmetadata', () => { if (near) scrollDown(); }, { once: true });
+    node.src = u;
+  });
+}
+const isNear = () => list.scrollHeight - list.scrollTop - list.clientHeight < 140;
+let scrollQueued = false;
+function scrollDown() {
+  if (scrollQueued) return; scrollQueued = true;
+  requestAnimationFrame(() => { scrollQueued = false; list.scrollTop = list.scrollHeight; });
+}
+let pending = 0;
+function bumpPill() { pending++; $('#newN').textContent = fmtN(pending); pill.hidden = false; }
+function clearPill() { pending = 0; pill.hidden = true; }
+pill.addEventListener('click', () => { list.scrollTop = list.scrollHeight; clearPill(); });
+list.addEventListener('scroll', () => { if (!pill.hidden && isNear()) clearPill(); }, { passive: true });
+
+function append(m) {
+  const near = isNear();
+  const frag = document.createDocumentFragment();
+  maybeDay(m.t, frag);
+  frag.appendChild(makeEl(m, true));
+  list.appendChild(frag);
+  if (near && list.children.length > 650) { while (list.children.length > 540) list.firstElementChild.remove(); }
+  if (near || m.kind === 'idol') scrollDown(); else bumpPill();
+}
+function renderAll() {
+  list.textContent = ''; lastDay = ''; clearPill();
+  const frag = document.createDocumentFragment();
+  for (const m of msgs.slice(-320)) { maybeDay(m.t, frag); frag.appendChild(makeEl(m, false)); }
+  list.appendChild(frag);
+  requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+}
+
+/* ---------- header ---------- */
+function updateHeader() {
+  $('#hName').textContent = cfg.group ? `${cfg.name} (${cfg.group})` : cfg.name;
+  $('#hFace').innerHTML = faceHTML(cfg);
+  $('#hSub').textContent = `구독자 ${fmtSubs(meta.subs || 0)}명`;
+}
+function updateBadge() { const n = letters.filter(l => !l.read).length; const b = $('#lBadge'); b.textContent = n > 99 ? '99+' : n; b.hidden = !n; }
+
+/* ---------- toast / lightbox ---------- */
+let toastT = 0;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 2400); }
+const lb = $('#lb');
+lb.addEventListener('click', () => { lb.hidden = true; });
+function openLB(src) { lb.querySelector('img').src = src; lb.hidden = false; }
+
+/* ---------- action sheet ---------- */
+const asWrap = $('#asWrap'), asEl = $('#as');
+function openAction({ title, sub, actions }) {
+  const head = (title || sub) ? `<div class="as-h">${title ? `<b>${esc(title)}</b>` : ''}${sub ? `<span>${esc(sub)}</span>` : ''}</div>` : '';
+  asEl.innerHTML = `<div class="as-g">${head}${actions.map((a, i) => `<button class="as-b${a.red ? ' red' : ''}" type="button" data-i="${i}">${esc(a.label)}</button>`).join('')}</div><div class="as-g"><button class="as-b cancel" type="button" data-i="-1">취소</button></div>`;
+  asWrap.hidden = false;
+  asEl.querySelectorAll('.as-b').forEach(b => b.addEventListener('click', () => { closeAction(); const i = +b.dataset.i; if (i >= 0) actions[i].fn(); }));
+}
+function closeAction() { asWrap.hidden = true; asEl.innerHTML = ''; }
+$('#asScrim').addEventListener('click', closeAction);
+
+/* ---------- pages ---------- */
+const page = $('#page');
+let pageBack = null;
+function openPage({ title, back, right, body, foot, bind, anim = true }) {
+  page.classList.toggle('noanim', !anim);
+  if (anim) { page.style.animation = 'none'; void page.offsetWidth; page.style.animation = ''; }
+  $('#pgTitle').textContent = title;
+  const L = $('#pgLeft'), Rt = $('#pgRight');
+  L.innerHTML = back ? ICON.back : ''; L.style.visibility = back ? 'visible' : 'hidden'; L.onclick = back || null;
+  Rt.textContent = right ? right.label : ''; Rt.style.visibility = right ? 'visible' : 'hidden'; Rt.onclick = right ? right.fn : null;
+  const B = $('#pgBody'); B.innerHTML = body; B.scrollTop = 0;
+  const F = $('#pgFoot'); F.innerHTML = foot || ''; F.hidden = !foot;
+  page.hidden = false;
+  pageBack = back || null;
+  if (bind) bind(page);
+}
+function closePage() { page.hidden = true; $('#pgBody').innerHTML = ''; $('#pgFoot').innerHTML = ''; pageBack = null; }
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!asWrap.hidden) closeAction();
+  else if (!lb.hidden) lb.hidden = true;
+  else if (!page.hidden && pageBack) pageBack();
+});
+
+/* ---------- persistence ---------- */
+let saveT = 0;
+function saveSoon() { clearTimeout(saveT); saveT = setTimeout(saveAll, 700); }
+function saveAll() {
+  clearTimeout(saveT);
+  if (msgs.length > 520) { const removed = msgs.splice(0, msgs.length - 480); removed.forEach(x => { if (x.media) media.del(x.media); }); }
+  store.set('dh.msgs', msgs); store.set('dh.cfg', cfg); store.set('dh.blocked', [...blocked]); store.set('dh.letters', letters); store.set('dh.meta', meta);
+}
+window.addEventListener('pagehide', saveAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveAll(); });
+
+/* ---------- AI (Claude) ---------- */
+const DENY = ['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'];
+let aiState = 'unknown', imgOK = false;
+const samplePromise = (window.claude && typeof window.claude.use === 'function') ? window.claude.use('sample').catch(() => null) : Promise.resolve(null);
+samplePromise.then(async s => {
+  if (!s) { aiState = 'none'; return; }
+  aiState = 'ready';
+  try { const l = await s.limits(); imgOK = !!(l && l.images); } catch (e) {}
+});
+function describe(x) {
+  const parts = [];
+  if (x.type === 'photo') parts.push('[사진]');
+  if (x.type === 'video') parts.push('[영상]');
+  if (x.type === 'voice') parts.push(`[음성 메시지 ${Math.round(x.dur || 0)}초]`);
+  if (x.text) parts.push('"' + x.text.split(NAME_TOKEN).join('(팬 닉네임)') + '"');
+  return parts.join(' ') || '(빈 메시지)';
+}
+function aiPrompt(m, ctx) {
+  const male = cfg.gender === 'm';
+  const n = cfg.name || '최애';
+  const ni = hasB(n) ? n + '이' : n;
+  const prev = msgs.filter(x => x.kind === 'idol' && x.id !== m.id).slice(-3).map(x => '- ' + describe(x)).join('\n') || '- (없음, 오늘 첫 메시지)';
+  const antiN = Math.round(20 * ctx.anti / 100);
+  const L = [
+    'K팝 아이돌 팬 메신저 체험 앱이야. 아이돌이 구독한 팬 전체에게 보낸 메시지에 팬들이 실시간으로 보내는 답장 20개를 만들어 줘.',
+    '',
+    `아이돌: ${cfg.group ? cfg.group + ' ' : ''}${n} (${male ? '남자' : '여자'} 아이돌), 팬덤 이름: ${cfg.fandom || '팬'}`,
+    `이전 메시지:\n${prev}`,
+    `방금 보낸 메시지: ${describe(m)}`
+  ];
+  if (ctx.name) L.push('메시지 속 "(팬 닉네임)" 자리에는 팬마다 자기 닉네임이 보여. 이름 불러 준 것에 감동하는 팬도 몇 명 넣어.');
+  if (ctx.quote) L.push(`이 메시지는 어떤 팬의 답장 "${ctx.quote.text}"를 인용해서 답한 거야. 팬들에게는 인용된 내용만 보이고 누가 보낸 건지는 안 보여. "저거 나야?", "누가 저런 말 했어ㅋㅋ"처럼 궁금해하거나 부러워하는 팬도 넣되, 보낸 사람 닉네임은 절대 언급하지 마. 인용된 본인은 넣지 마.`);
+  if (ctx.image) L.push('첨부된 사진을 보고 사진 속 구체적인 것(옷, 표정, 배경, 음식, 소품 등)을 언급하는 답장을 여러 개 넣어.');
+  L.push('',
+    '규칙:',
+    '- 대부분은 방금 메시지 내용에 직접 반응하고, 질문이 있으면 각자 자기 대답을 해.',
+    '- 팬들은 아이돌 메시지와 자기 답장만 볼 수 있고 다른 팬의 답장은 못 봐. 그러니까 다른 팬의 답장이나 닉네임을 언급하거나 다른 팬에게 말을 거는 답장은 넣지 마. 모두 아이돌에게 1:1로 보내는 말투로.',
+    `- 팬 유형(type): kid(초등학생, 존댓말, 순수함), brat(개잼민이: 초등 저학년 장난꾸러기, 반말 막 섞음, 도배, 맞춤법 틀림, "1등!!", "ㅋㅋㅋㅋ", 엉뚱한 소리), teenF(10대 여자), teenM(10대 남자), adultF(20~30대 여자 직장인), adultM(성인 남자, 존댓말 섞음), auntie(이모팬, 자식 대하듯 "우리 ${ni}"), intl(해외팬: 영어, 일본어, 서툰 한국어), anti(안티).`,
+    `- 호칭: 여자 팬은 "${male ? '오빠' : '언니'}", 남자 팬은 "${male ? '형' : '누나'}". 반말과 존댓말은 유형에 맞게.`,
+    '- 실제 팬 말투: ㅠㅠ, ㅋㅋ, 부둥부둥, 꺄악, 이모지 조금. 대부분 한 줄(5~40자), 가끔 조금 길게. 말투와 길이를 다양하게.',
+    '- 유형을 골고루 섞되 teenF와 adultF를 가장 많이, brat도 2~3개.',
+    antiN ? `- anti는 정확히 ${antiN}개. 가볍게 비꼬거나 불평하는 정도만(성의 없다, 돈 아깝다 등). 욕설, 혐오, 외모 비하, 위협은 넣지 마.` : '- anti는 넣지 마.',
+    '- 연애, 결혼, 스킨십, 성적인 내용은 넣지 마. 애정 표현은 응원과 "사랑해" 정도까지.',
+    '',
+    '출력은 JSON 배열만: [{"type":"teenF","text":"..."}, ...]');
+  return L.join('\n');
+}
+async function requestAI(m, ctx, blob) {
+  if (!cfg.ai || aiState === 'denied' || aiState === 'none') return;
+  const s = await samplePromise; if (!s) return;
+  const opts = { modelTier: 'quick', cache: false };
+  if (blob && imgOK && m.type === 'photo') { opts.images = blob; ctx.image = true; }
+  try {
+    const out = await s.json(aiPrompt(m, ctx), opts);
+    const arr = Array.isArray(out) ? out : (out && Array.isArray(out.replies) ? out.replies : []);
+    const items = arr.map(x => ({
+      type: x && ALL_TYPES.includes(x.type) ? x.type : 'adultF',
+      text: String((x && x.text) || '').replace(/\s+/g, ' ').trim().slice(0, 140)
+    })).filter(x => x.text && (x.type !== 'anti' || ctx.anti > 0));
+    ctx.ai.push(...shuffle(items));
+  } catch (e) {
+    const code = e && e.code;
+    if (DENY.includes(code)) aiState = 'denied';
+    if (code === 'images_unavailable') imgOK = false;
+  }
+}
+
+/* ---------- reply engine ---------- */
+let jobs = [];
+let idleAnti = rollAnti(), idleAntiAt = 0;
+function startJob(m, ctx) {
+  const S = SCALE[cfg.scale];
+  const N = rint(S.show[0], S.show[1]);
+  const tau = S.dur / 3.2;
+  const norm = 1 - Math.exp(-S.dur / tau);
+  const times = [];
+  for (let i = 0; i < N; i++) times.push(650 + (-tau * Math.log(1 - R() * norm)));
+  times.sort((a, b) => a - b);
+  if (ctx.quote) times[0] = Math.min(times[0], 1300);
+  const target = Math.max(N, Math.round((meta.subs || 1000) * (S.rate[0] + R() * (S.rate[1] - S.rate[0]))));
+  jobs.push({ m, ctx, times, i: 0, start: performance.now(), tau, norm, dur: S.dur, target });
+}
+function emitFan(fan, text, to) {
+  if (!fan || blocked.has(fan.fid) || !text) return;
+  const m = { id: uid(), kind: 'fan', t: Date.now(), fid: fan.fid, nick: fan.nick, days: fan.days, hue: fan.hue, av: fan.av, type: fan.type, text, to: to || null };
+  msgs.push(m); append(m); saveSoon();
+}
+function emitForJob(job, idx) {
+  const { ctx, m } = job;
+  if (idx === 0 && ctx.quote && !blocked.has(ctx.quote.fid)) {
+    const q = ctx.quote;
+    const fan = byId.get(q.fid) || { fid: q.fid, nick: q.nick, type: q.type || 'adultF', g: 'f', days: q.days || rint(10, 900), hue: q.hue == null ? rint(0, 359) : q.hue, av: q.av };
+    return emitFan(fan, fill(lineFor('quoteTarget', fan) || '답장 고마워ㅠㅠㅠ', fan, ctx), m.id);
+  }
+  if (ctx.ai.length && R() < .72) {
+    const it = ctx.ai.shift();
+    return emitFan(pickFan(it.type) || pickFan('adultF'), it.text, m.id);
+  }
+  const fan = pickFan(rollType(ctx.anti)) || pickFan('adultF');
+  if (!fan) return;
+  let cat = null; const r = R();
+  if (ctx.quote && r < .22) cat = 'quoteOthers';
+  else if (ctx.name && r < .32) cat = 'name';
+  else if (ctx.media && r < .55) cat = ctx.media;
+  else if (ctx.cats.length && r < .62) cat = pick(ctx.cats);
+  const tpl = (cat && lineFor(cat, fan)) || generic(fan);
+  emitFan(fan, fill(tpl, fan, ctx), m.id);
+}
+let nextIdle = 0, lastSec = 0;
+function tick() {
+  const now = performance.now();
+  for (const job of jobs) {
+    const e = now - job.start;
+    while (job.i < job.times.length && e >= job.times[job.i]) { emitForJob(job, job.i); job.i++; }
+    const e2 = Math.max(0, e - 400);
+    const F = Math.min(1, (1 - Math.exp(-e2 / job.tau)) / job.norm);
+    const c = Math.round(job.target * F);
+    if (c !== job.m.count) { job.m.count = c; updateCount(job.m); }
+    if (job.i >= job.times.length && e > job.dur + 2500) { job.m.count = job.target; updateCount(job.m); job.done = true; saveSoon(); }
+  }
+  if (jobs.some(j => j.done)) jobs = jobs.filter(j => !j.done);
+  if (!cfg.debuted) return;
+  if (jobs.length) nextIdle = now + 5000;
+  else if (!document.hidden && now >= nextIdle) {
+    const S = SCALE[cfg.scale];
+    if (now - idleAntiAt > 90000) { idleAnti = rollAnti(); idleAntiAt = now; }
+    if (nextIdle) {
+      const fan = pickFan(rollType(idleAnti)) || pickFan('adultF');
+      if (fan) emitFan(fan, fill((R() < .55 && lineFor('idle', fan)) || generic(fan), fan, null), null);
+    }
+    nextIdle = now + rint(S.idle[0], S.idle[1]);
+  }
+  if (now - lastSec > 1000) {
+    lastSec = now;
+    if (Date.now() >= meta.nextLetter && !document.hidden) {
+      letters.push(makeLetter()); if (letters.length > 40) letters.splice(0, letters.length - 40);
+      meta.nextLetter = Date.now() + rint(180000, 420000);
+      updateBadge(); saveSoon(); toast('새 편지가 도착했어요');
+    }
+  }
+}
+function updateCount(m) {
+  const b = list.querySelector(`.me[data-id="${m.id}"] .rc b`);
+  if (b) b.textContent = fmtN(m.count);
+}
+
+/* ---------- letters ---------- */
+function makeLetter() {
+  const type = pick(['teenF', 'adultF', 'adultF', 'kid', 'brat', 'auntie', 'adultM', 'intl', 'teenF']);
+  const fan = pickFan(type) || pickFan('adultF');
+  const L = LET[LSTYLE[fan.type]] || LET.casual;
+  const mids = shuffle(L.mid.slice()).slice(0, 2);
+  const body = [pick(L.open), ...mids, pick(L.close)].map(s => fill(s, fan, null)).join('\n\n');
+  return { id: uid(), t: Date.now(), fid: fan.fid, nick: fan.nick, days: fan.days, hue: fan.hue, av: fan.av, body, read: false };
+}
+function openLetters() {
+  const items = letters.slice().reverse();
+  openPage({
+    title: '편지함', back: closePage,
+    body: items.length
+      ? `<div class="glabel">받은 편지 ${letters.length}통</div><div class="cells">${items.map(l => `<button class="lcell${l.read ? '' : ' new'}" type="button" data-id="${l.id}"><div class="lmain"><div class="ln">${esc(l.nick)}</div><div class="lp">${esc(l.body.split('\n')[0])}</div></div><span class="ldate">${shortDate(l.t)}</span></button>`).join('')}</div>`
+      : '<p class="empty">아직 받은 편지가 없어요.</p>',
+    bind: p => p.querySelectorAll('.lcell').forEach(b => b.addEventListener('click', () => openLetter(b.dataset.id)))
+  });
+}
+function openLetter(id) {
+  const l = letters.find(x => x.id === id); if (!l) return;
+  l.read = true; updateBadge(); saveSoon();
+  openPage({
+    title: '편지', back: openLetters,
+    body: `<div class="lhead"><div><b>${esc(l.nick)}</b><span>구독 ${l.days}일째 · ${shortDate(l.t)}</span></div></div><div class="lcard">${esc(l.body)}</div>`
+  });
+}
+
+/* ---------- fan / idol actions ---------- */
+let quote = null;
+function setQuote(m) {
+  quote = { fid: m.fid, nick: m.nick, text: m.text, type: m.type, days: m.days, hue: m.hue, av: m.av };
+  const q = $('#qbar');
+  q.innerHTML = `<div class="qtxt"><b>${esc(m.nick)}님에게 답장 · 팬들에겐 내용만 보여요</b><span>${esc(m.text)}</span></div><button class="x" type="button" aria-label="답장 취소">${ICON.x}</button>`;
+  q.hidden = false;
+  q.querySelector('.x').addEventListener('click', clearQuote);
+}
+function clearQuote() { quote = null; const q = $('#qbar'); q.hidden = true; q.innerHTML = ''; }
+function openFanSheet(id) {
+  const m = msgs.find(x => x.id === id); if (!m) return;
+  openAction({
+    title: `${m.nick} · 구독 ${m.days}일째`, sub: m.text,
+    actions: [
+      { label: '답장', fn: () => { setQuote(m); ta.focus(); } },
+      { label: '차단', red: true, fn: () => blockFan(m.fid) }
+    ]
+  });
+}
+function blockFan(fid) {
+  blocked.add(fid);
+  msgs = msgs.filter(x => !(x.kind === 'fan' && x.fid === fid));
+  list.querySelectorAll('.fan').forEach(n => { if (n.dataset.fid === fid) n.remove(); });
+  if (quote && quote.fid === fid) clearQuote();
+  saveAll(); toast('차단했어요');
+}
+function openIdolSheet(id) {
+  const m = msgs.find(x => x.id === id); if (!m) return;
+  const acts = [];
+  if (m.type === 'photo') acts.push({ label: '크게 보기', fn: () => { const img = list.querySelector(`.me[data-id="${id}"] img.pic`); if (img && img.src) openLB(img.src); } });
+  acts.push({ label: '삭제', red: true, fn: () => deleteIdol(id) });
+  openAction({ title: `답장 ${fmtN(m.count || 0)}개`, sub: `${dayLabel(m.t)} ${tfmt.format(m.t)}`, actions: acts });
+}
+function deleteIdol(id) {
+  const m = msgs.find(x => x.id === id); if (!m) return;
+  jobs = jobs.filter(j => j.m.id !== id);
+  msgs = msgs.filter(x => x.id !== id);
+  if (m.media) { media.del(m.media); const u = urlCache.get(m.media); if (u) URL.revokeObjectURL(u); urlCache.delete(m.media); }
+  const node = list.querySelector(`.me[data-id="${id}"]`); if (node) node.remove();
+  saveAll(); toast('삭제했어요');
+}
+
+// only avatars and bubbles react to taps
+list.addEventListener('click', e => {
+  const play = e.target.closest('[data-play]'); if (play) { toggleVoice(play); return; }
+  if (e.target.closest('video')) return;
+  const img = e.target.closest('img.pic'); if (img) { if (img.src) openLB(img.src); return; }
+  const fanHit = e.target.closest('.fan .fname span, .fan .fb'); if (fanHit) { openFanSheet(fanHit.closest('.fan').dataset.id); return; }
+  const meHit = e.target.closest('.me .ib, .me .side'); if (meHit) openIdolSheet(meHit.closest('.me').dataset.id);
+});
+list.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  if (e.target.classList.contains('fb')) { e.preventDefault(); openFanSheet(e.target.closest('.fan').dataset.id); }
+  else if (e.target.classList.contains('ib')) { e.preventDefault(); openIdolSheet(e.target.closest('.me').dataset.id); }
+});
+
+/* ---------- voice playback ---------- */
+let audio = null, audioBtn = null, audioBars = null;
+function stopVoice() {
+  if (audio) audio.pause();
+  if (audioBtn) audioBtn.innerHTML = ICON.play;
+  if (audioBars) audioBars.forEach(b => b.classList.remove('on'));
+  audio = audioBtn = audioBars = null;
+}
+function toggleVoice(btn) {
+  if (audio && audioBtn === btn) {
+    if (audio.paused) { audio.play().catch(() => {}); btn.innerHTML = ICON.pause; } else { audio.pause(); btn.innerHTML = ICON.play; }
+    return;
+  }
+  stopVoice();
+  getURL(btn.dataset.play).then(u => {
+    if (!u) { toast('이 기기에서 지워진 음성이에요'); return; }
+    audio = new Audio(u); audioBtn = btn; audioBars = [...btn.parentElement.querySelectorAll('.bars i')];
+    audio.addEventListener('timeupdate', () => {
+      if (!audio || !audioBars) return;
+      const p = audio.duration && isFinite(audio.duration) ? audio.currentTime / audio.duration : 0;
+      const k = Math.round(p * audioBars.length);
+      audioBars.forEach((b, i) => b.classList.toggle('on', i < k));
+    });
+    audio.addEventListener('ended', stopVoice);
+    audio.play().then(() => { btn.innerHTML = ICON.pause; }).catch(() => { toast('이 파일은 재생할 수 없어요'); stopVoice(); });
+  });
+}
+
+/* ---------- input bar ---------- */
+let att = null;
+const tray = $('#tray'), plusBtn = $('#bPlus');
+function autosize() { ta.style.height = 'auto'; ta.style.height = Math.min(Math.max(ta.scrollHeight, 42), 124) + 'px'; }
+function refreshSend() { sendBtn.disabled = !(ta.value.trim() || att); }
+function closeTray() { tray.hidden = true; plusBtn.setAttribute('aria-expanded', 'false'); }
+plusBtn.addEventListener('click', () => {
+  const opening = tray.hidden; const near = isNear();
+  tray.hidden = !opening; plusBtn.setAttribute('aria-expanded', String(opening));
+  if (opening) ta.blur();
+  if (near) scrollDown();
+});
+ta.addEventListener('focus', closeTray);
+ta.addEventListener('input', () => { autosize(); refreshSend(); });
+ta.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229 && window.matchMedia('(hover:hover) and (pointer:fine)').matches) { e.preventDefault(); send(); }
+});
+sendBtn.addEventListener('click', send);
+$('#tAlbum').addEventListener('click', () => { closeTray(); $('#fMedia').click(); });
+$('#tVoice').addEventListener('click', () => { closeTray(); $('#fVoice').click(); });
+$('#tName').addEventListener('click', () => {
+  closeTray();
+  const s = ta.selectionStart == null ? ta.value.length : ta.selectionStart;
+  const e2 = ta.selectionEnd == null ? s : ta.selectionEnd;
+  ta.value = ta.value.slice(0, s) + NAME_TOKEN + ta.value.slice(e2);
+  ta.focus(); const p = s + NAME_TOKEN.length; try { ta.setSelectionRange(p, p); } catch (err) {}
+  autosize(); refreshSend();
+  if (!meta.nameTip) { meta.nameTip = true; saveSoon(); toast(`${NAME_TOKEN} 자리는 팬마다 자기 닉네임으로 보여요`); }
+});
+function compress(file, max, q) {
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file); const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(u);
+      c.toBlob(b => b ? res(b) : rej(new Error('blob')), 'image/jpeg', q);
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('decode')); };
+    img.src = u;
+  });
+}
+const toDataURL = blob => new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(null); fr.readAsDataURL(blob); });
+function audioDur(u) {
+  return new Promise(res => {
+    const a = new Audio(); let done = false;
+    const fin = v => { if (!done) { done = true; res(v); } };
+    a.addEventListener('loadedmetadata', () => fin(isFinite(a.duration) ? a.duration : 0));
+    a.addEventListener('error', () => fin(0));
+    setTimeout(() => fin(0), 4000);
+    a.preload = 'metadata'; a.src = u;
+  });
+}
+function setAttachment(a) {
+  clearAttachment(true);
+  att = a;
+  const box = $('#attach');
+  const thumb = a.kind === 'photo' ? `<img src="${a.url}" alt="">` : a.kind === 'video' ? `<video src="${a.url}" muted playsinline preload="metadata"></video>` : `<span class="wv">${ICON.wave}</span>`;
+  const label = a.kind === 'photo' ? '사진' : a.kind === 'video' ? '동영상' : `음성 ${fmtDur(a.dur)}`;
+  box.innerHTML = `${thumb}<div class="qtxt"><b>${label}</b><span>메시지를 같이 보낼 수 있어요</span></div><button class="x" type="button" aria-label="첨부 빼기">${ICON.x}</button>`;
+  box.hidden = false;
+  box.querySelector('button.x').addEventListener('click', () => clearAttachment(true));
+  refreshSend();
+}
+function clearAttachment(revoke) {
+  if (att && revoke) URL.revokeObjectURL(att.url);
+  att = null; const box = $('#attach'); box.hidden = true; box.innerHTML = ''; refreshSend();
+}
+$('#fMedia').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (f.type.startsWith('video/')) {
+    if (f.size > 150 * 1024 * 1024) { toast('동영상은 150MB까지 보낼 수 있어요'); return; }
+    setAttachment({ kind: 'video', blob: f, url: URL.createObjectURL(f) });
+  } else {
+    let blob = f;
+    try { blob = await compress(f, 1440, .86); } catch (err) {}
+    setAttachment({ kind: 'photo', blob, url: URL.createObjectURL(blob) });
+  }
+});
+$('#fVoice').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (f.size > 60 * 1024 * 1024) { toast('음성은 60MB까지 보낼 수 있어요'); return; }
+  const u = URL.createObjectURL(f);
+  setAttachment({ kind: 'voice', blob: f, url: u, dur: await audioDur(u) });
+});
+function send() {
+  const text = ta.value.trim();
+  if (!text && !att) return;
+  const m = { id: uid(), kind: 'idol', t: Date.now(), text, count: 0 };
+  let blob = null;
+  if (att) {
+    m.type = att.kind; m.media = 'm_' + m.id; if (att.dur) m.dur = att.dur;
+    blob = att.blob; urlCache.set(m.media, att.url); media.put(m.media, blob);
+  }
+  if (quote) m.quote = { fid: quote.fid, nick: quote.nick, text: quote.text };
+  const ctx = { cats: detectCats(text), media: m.type || null, name: text.includes(NAME_TOKEN), quote: quote ? Object.assign({}, quote) : null, anti: rollAnti(), ai: [] };
+  idleAnti = ctx.anti; idleAntiAt = performance.now();
+  msgs.push(m); append(m); saveSoon();
+  ta.value = ''; autosize(); clearAttachment(false); clearQuote(); closeTray(); refreshSend();
+  startJob(m, ctx);
+  requestAI(m, ctx, blob);
+}
+
+/* ---------- profile fields ---------- */
+function seg(name, opts, val) {
+  return opts.map(([v, label]) => `<label><input type="radio" name="${name}" id="${name}-${v}" value="${v}"${v === val ? ' checked' : ''}><span>${label}</span></label>`).join('');
+}
+function profileHTML(p, c) {
+  const known = COLORS.some(([h]) => h.toLowerCase() === String(c.color).toLowerCase());
+  return `
+  <div class="avwrap"><label class="avbig" for="${p}-av" aria-label="프로필 사진 바꾸기"><span class="face" id="${p}-face">${faceHTML(c)}</span><span class="cam">${ICON.cam}</span></label><input type="file" id="${p}-av" accept="image/*" hidden></div>
+  <div class="glabel">기본 정보</div>
+  <div class="cells">
+    <label class="cell"><span class="ck">활동명</span><input class="cv" type="text" id="${p}-name" maxlength="12" value="${esc(c.name)}" placeholder="필수" autocomplete="off"></label>
+    <label class="cell"><span class="ck">그룹명</span><input class="cv" type="text" id="${p}-group" maxlength="16" value="${esc(c.group)}" placeholder="솔로면 비워 두세요" autocomplete="off"></label>
+    <label class="cell"><span class="ck">팬덤명</span><input class="cv" type="text" id="${p}-fandom" maxlength="10" value="${esc(c.fandom)}" placeholder="예: 루미" autocomplete="off"></label>
+  </div>
+  <div class="glabel">성별</div>
+  <div class="seg">${seg(p + '-gender', [['f', '여자'], ['m', '남자']], c.gender)}</div>
+  <div class="glabel">대표 색상</div>
+  <div class="cells"><div class="sw">${COLORS.map(([h, nm]) => `<label title="${nm}"><input type="radio" name="${p}-sw" id="${p}-sw-${h.slice(1)}" value="${h}"${known && h.toLowerCase() === String(c.color).toLowerCase() ? ' checked' : ''} aria-label="${nm}"><span style="--c:${h}"></span></label>`).join('')}<label class="custom${known ? '' : ' on'}" id="${p}-custom" title="직접 고르기"><input type="color" id="${p}-color" value="${esc(c.color)}" aria-label="색 직접 고르기"></label></div></div>
+  <div class="glabel">팬 규모</div>
+  <div class="seg">${seg(p + '-scale', Object.entries(SCALE).map(([k, v]) => [k, v.label]), c.scale)}</div>
+  <p class="gnote">신인은 구독자 수천 명, 대세는 수만 명, 월드스타는 100만 명 안팎이에요.</p>`;
+}
+function bindProfile(root, p, draft) {
+  root.querySelector(`#${p}-av`).addEventListener('change', async e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { const b = await compress(f, 320, .86); draft.avatar = await toDataURL(b); } catch (err) { toast('이 사진은 쓸 수 없어요'); return; }
+    root.querySelector(`#${p}-face`).innerHTML = faceHTML(draft);
+  });
+  const nameIn = root.querySelector(`#${p}-name`);
+  nameIn.addEventListener('input', () => { draft.name = nameIn.value.trim(); if (!draft.avatar) root.querySelector(`#${p}-face`).innerHTML = faceHTML(draft); });
+  const colorIn = root.querySelector(`#${p}-color`), custom = root.querySelector(`#${p}-custom`);
+  root.querySelectorAll(`input[name="${p}-sw"]`).forEach(r => r.addEventListener('change', () => { colorIn.value = r.value; custom.classList.remove('on'); draft.color = r.value; setAccent(r.value); }));
+  colorIn.addEventListener('input', () => {
+    let hit = false;
+    root.querySelectorAll(`input[name="${p}-sw"]`).forEach(r => { r.checked = r.value.toLowerCase() === colorIn.value.toLowerCase(); hit = hit || r.checked; });
+    custom.classList.toggle('on', !hit);
+    draft.color = colorIn.value; setAccent(colorIn.value);
+  });
+}
+function readProfile(root, p, draft) {
+  const v = id => root.querySelector(`#${p}-${id}`).value.trim();
+  const r = name => { const el = root.querySelector(`input[name="${p}-${name}"]:checked`); return el ? el.value : null; };
+  return { name: v('name'), group: v('group'), fandom: v('fandom'), gender: r('gender') || 'f', scale: r('scale') || 'mid', color: root.querySelector(`#${p}-color`).value || cfg.color, avatar: draft.avatar || null };
+}
+
+/* ---------- setup ---------- */
+function showSetup() {
+  const draft = Object.assign({}, cfg);
+  openPage({
+    title: '프로필 설정', anim: false,
+    body: `<p class="intro">팬들에게 보이는 프로필이에요.<br>나중에 설정에서 바꿀 수 있어요.</p>${profileHTML('s', draft)}`,
+    foot: '<button class="btn" type="button" id="s-go">시작하기</button>',
+    bind: pg => {
+      bindProfile(pg, 's', draft);
+      const go = () => {
+        const prof = readProfile(pg, 's', draft);
+        if (!prof.name) { toast('활동명을 적어 주세요'); pg.querySelector('#s-name').focus(); return; }
+        debut(prof);
+      };
+      pg.querySelector('#s-go').addEventListener('click', go);
+      pg.querySelectorAll('.cv').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); go(); } }));
+    }
+  });
+}
+function seedChat() {
+  const now = Date.now();
+  msgs.push({ id: uid(), kind: 'sys', t: now - 60000, text: '채팅방이 열렸어요. 내 메시지는 모든 구독자에게 전달되고, 팬들의 답장은 나만 볼 수 있어요. 팬 프로필이나 말풍선을 누르면 답장하거나 차단할 수 있어요.' });
+  const k = rint(4, 6);
+  for (let i = 0; i < k; i++) {
+    const fan = pickFan(rollType(idleAnti)) || pickFan('adultF'); if (!fan) continue;
+    msgs.push({ id: uid(), kind: 'fan', t: now - (k - i) * rint(6000, 14000), fid: fan.fid, nick: fan.nick, days: fan.days, hue: fan.hue, av: fan.av, type: fan.type, text: fill((R() < .7 && lineFor('idle', fan)) || generic(fan), fan, null), to: null });
+  }
+}
+function debut(prof) {
+  const rescale = prof.scale !== cfg.scale || !meta.subs;
+  Object.assign(cfg, prof, { debuted: true });
+  setAccent(); buildPool();
+  if (rescale) { const S = SCALE[cfg.scale]; meta.subs = rint(S.subs[0], S.subs[1]); }
+  if (!msgs.length) seedChat();
+  if (!letters.length) letters.push(makeLetter(), makeLetter());
+  meta.nextLetter = Date.now() + rint(150000, 300000);
+  nextIdle = 0;
+  saveAll(); renderAll(); updateHeader(); updateBadge(); closePage();
+}
+
+/* ---------- settings ---------- */
+function openSettings() {
+  const draft = Object.assign({}, cfg);
+  const aiWarn = aiState === 'none' ? ' 지금 화면에서는 쓸 수 없어서 기본 답장으로 나와요.' : aiState === 'denied' ? ' Claude 사용을 허락하지 않아서 기본 답장으로 나와요. 다시 열면 또 물어봐요.' : '';
+  const cancel = () => { setAccent(cfg.color); closePage(); };
+  openPage({
+    title: '설정', back: cancel,
+    right: { label: '완료', fn: () => { if (page._save) page._save(); } },
+    body: `${profileHTML('p', draft)}
+      ${aiState === 'none' ? '' : `<div class="glabel">답장</div>
+      <div class="cells"><label class="cell" for="p-ai"><span class="grow">내용 맞춤 답장</span><input type="checkbox" class="toggle" id="p-ai"${cfg.ai ? ' checked' : ''}></label></div>
+      <p class="gnote${aiWarn ? ' warn' : ''}">켜 두면 팬들이 내 글과 사진 내용을 보고 답장해요. 처음 보낼 때 Claude 사용을 허락할지 물어봐요.${aiWarn}</p>`}
+      <div class="glabel">관리</div>
+      <div class="cells">
+        <div class="cell"><span class="grow">차단한 팬</span><span class="val" id="blkN">${blocked.size}명</span>${blocked.size ? '<button class="mini" type="button" id="p-unblock">모두 해제</button>' : ''}</div>
+        <button class="cell red" type="button" id="p-clear">채팅 비우기</button>
+        <button class="cell red" type="button" id="p-reset">처음부터 다시 시작</button>
+      </div>`,
+    bind: pg => {
+      bindProfile(pg, 'p', draft);
+      const ub = pg.querySelector('#p-unblock');
+      if (ub) ub.addEventListener('click', () => { blocked.clear(); saveAll(); pg.querySelector('#blkN').textContent = '0명'; ub.remove(); toast('차단을 모두 풀었어요'); });
+      pg.querySelector('#p-clear').addEventListener('click', () => openAction({
+        title: '채팅을 모두 지울까요?', sub: '보낸 메시지와 팬 답장이 모두 사라져요.',
+        actions: [{ label: '지우기', red: true, fn: () => {
+          jobs = []; msgs = []; media.clear(); urlCache.forEach(u => URL.revokeObjectURL(u)); urlCache.clear();
+          msgs.push({ id: uid(), kind: 'sys', t: Date.now(), text: '채팅을 비웠어요.' });
+          saveAll(); renderAll(); cancel(); toast('채팅을 비웠어요');
+        } }]
+      }));
+      pg.querySelector('#p-reset').addEventListener('click', () => openAction({
+        title: '처음부터 다시 시작할까요?', sub: '채팅, 편지, 차단 목록이 모두 지워져요.',
+        actions: [{ label: '다시 시작', red: true, fn: () => {
+          jobs = []; msgs = []; letters = []; blocked.clear(); media.clear(); urlCache.clear();
+          cfg.debuted = false; meta.subs = 0; saveAll(); renderAll(); updateBadge(); setAccent(cfg.color);
+          showSetup();
+        } }]
+      }));
+      function save() {
+        const prof = readProfile(pg, 'p', draft);
+        if (!prof.name) { toast('활동명을 적어 주세요'); pg.querySelector('#p-name').focus(); return; }
+        const rebuild = prof.name !== cfg.name || prof.group !== cfg.group || prof.gender !== cfg.gender || prof.fandom !== cfg.fandom;
+        const rescale = prof.scale !== cfg.scale;
+        const aiEl = pg.querySelector('#p-ai');
+        Object.assign(cfg, prof, { ai: aiEl ? aiEl.checked : cfg.ai });
+        if (rebuild) { buildPool(); refreshNicks(); }
+        if (rescale) { const S = SCALE[cfg.scale]; meta.subs = rint(S.subs[0], S.subs[1]); }
+        setAccent(); updateHeader(); saveAll(); closePage();
+        if (rebuild) renderAll();
+        toast('저장했어요');
+      }
+      pg._save = save;
+    }
+  });
+}
+
+$('#bLetters').addEventListener('click', openLetters);
+$('#bSettings').addEventListener('click', openSettings);
+
+/* ---------- boot ---------- */
+function refreshNicks() {
+  for (const m of msgs) if (m.kind === 'fan') { const f = byId.get(m.fid); if (f) m.nick = f.nick; }
+  for (const l of letters) { const f = byId.get(l.fid); if (f) l.nick = f.nick; }
+}
+try { localStorage.removeItem('dh.pfps'); } catch (e) {}
+setAccent(); buildPool(); refreshNicks();
+if (cfg.debuted) {
+  if (!meta.subs) { const S = SCALE[cfg.scale]; meta.subs = rint(S.subs[0], S.subs[1]); }
+  renderAll();
+} else {
+  showSetup();
+}
+updateHeader(); updateBadge(); autosize();
+setInterval(tick, 150);
+})();
+</script>
+</body>
+</html>
