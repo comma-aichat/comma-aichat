@@ -8,9 +8,9 @@
 <style>
 /* Layout: native-messenger column — top bar · chat (fans left with avatar, me right in my color) · input bar with + tray. Settings and letters open as full pages; item actions use bottom action sheets. */
 :root{
-  --accent:#ff4f86;
-  --on-accent:#ffffff;
-  --accent-ink:color-mix(in oklab, var(--accent) 80%, #141416);
+  --accent:#ffaec9;
+  --on-accent:#3d1426;
+  --accent-ink:#c2386c;
   --chat:#f2f3f5;
   --bar:#ffffff;
   --surface:#ffffff;
@@ -200,17 +200,10 @@ video.pic{object-fit:contain;background:#000;cursor:auto}
 .cam svg{width:16px;height:16px}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:2px;border-radius:10px;background:var(--seg)}
 .seg label{position:relative;display:block}
-.seg input,.sw input{position:absolute;opacity:0;pointer-events:none}
+.seg input{position:absolute;opacity:0;pointer-events:none}
 .seg span{display:grid;place-items:center;height:34px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer}
 .seg input:checked+span{background:var(--seg-on);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14)}
-.seg input:focus-visible+span,.sw input:focus-visible+span{outline:2px solid var(--accent);outline-offset:1px}
-.sw{display:flex;flex-wrap:wrap;gap:12px;padding:13px 16px}
-.sw label{position:relative;display:block}
-.sw span{display:block;width:30px;height:30px;border-radius:50%;background:var(--c);cursor:pointer}
-.sw input:checked+span{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c)}
-.custom{position:relative;width:30px;height:30px;border-radius:50%;overflow:hidden;cursor:pointer;background:conic-gradient(#ff4f6d,#ffb300,#4cd964,#2ec5ff,#7b61ff,#ff4f6d)}
-.custom.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
-.custom input{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;opacity:0;cursor:pointer}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:1px}
 .toggle{appearance:none;-webkit-appearance:none;flex:none;position:relative;width:50px;height:30px;margin:0;border-radius:15px;background:var(--seg);cursor:pointer;transition:background .15s}
 .toggle::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
 .toggle:checked{background:var(--accent)}
@@ -240,7 +233,7 @@ video.pic{object-fit:contain;background:#000;cursor:auto}
   <header class="top">
     <div class="me-face" id="hFace"></div>
     <div class="who">
-      <div class="nm" id="hName">하린</div>
+      <div class="nm" id="hName"></div>
       <div class="sub" id="hSub">구독자</div>
     </div>
     <button class="ibtn" id="bLetters" type="button" aria-label="편지함">
@@ -359,9 +352,9 @@ const SCALE = {
   mid: { label: '대세', subs: [28000, 76000], show: [55, 75], dur: 65000, idle: [5000, 13000], rate: [.08, .15] },
   big: { label: '월드스타', subs: [620000, 1400000], show: [110, 150], dur: 85000, idle: [2200, 6500], rate: [.05, .1] }
 };
-const COLORS = [['#ff4f86', '핑크'], ['#8b5cf6', '퍼플'], ['#2f7bf6', '블루'], ['#14b8a6', '민트'], ['#f5b301', '옐로'], ['#ff6a3d', '코랄'], ['#e11d48', '레드'], ['#5b6472', '그레이']];
-const DEF = { name: '하린', group: 'LUMÉRA', fandom: '루미', gender: 'f', color: '#ff4f86', scale: 'mid', ai: true, avatar: null, debuted: false };
-let cfg = Object.assign({}, DEF, store.get('dh.cfg', {}));
+const PINK = '#ffaec9';
+const DEF = { name: '', group: '', fandom: '', gender: 'f', color: PINK, scale: 'mid', ai: true, avatar: null, debuted: false };
+let cfg = Object.assign({}, DEF, store.get('dh.cfg', {}), { color: PINK });
 let msgs = store.get('dh.msgs', []);
 let blocked = new Set(store.get('dh.blocked', []));
 let letters = store.get('dh.letters', []);
@@ -746,18 +739,10 @@ const ICON = {
 };
 
 /* ---------- accent ---------- */
-function lum(hex) {
-  let v = String(hex || '#ff4f86').replace('#', '');
-  if (v.length === 3) v = v.split('').map(x => x + x).join('');
-  const ch = [0, 2, 4].map(i => parseInt(v.substr(i, 2), 16) / 255).map(x => x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4));
-  return .2126 * ch[0] + .7152 * ch[1] + .0722 * ch[2];
-}
-function setAccent(c) {
-  c = c || cfg.color;
-  const L = lum(c);
+function setAccent() {
   const root = document.documentElement;
-  root.style.setProperty('--accent', c);
-  root.style.setProperty('--on-accent', 1.05 / (L + .05) >= (L + .05) / .061 ? '#ffffff' : '#1b1a1d');
+  root.style.setProperty('--accent', PINK);
+  root.style.setProperty('--on-accent', '#3d1426');
 }
 const faceHTML = c => c.avatar ? `<img src="${esc(c.avatar)}" alt="">` : esc(firstChar(c.name || '나'));
 
@@ -1265,7 +1250,6 @@ function seg(name, opts, val) {
   return opts.map(([v, label]) => `<label><input type="radio" name="${name}" id="${name}-${v}" value="${v}"${v === val ? ' checked' : ''}><span>${label}</span></label>`).join('');
 }
 function profileHTML(p, c) {
-  const known = COLORS.some(([h]) => h.toLowerCase() === String(c.color).toLowerCase());
   return `
   <div class="avwrap"><label class="avbig" for="${p}-av" aria-label="프로필 사진 바꾸기"><span class="face" id="${p}-face">${faceHTML(c)}</span><span class="cam">${ICON.cam}</span></label><input type="file" id="${p}-av" accept="image/*" hidden></div>
   <div class="glabel">기본 정보</div>
@@ -1276,8 +1260,6 @@ function profileHTML(p, c) {
   </div>
   <div class="glabel">성별</div>
   <div class="seg">${seg(p + '-gender', [['f', '여자'], ['m', '남자']], c.gender)}</div>
-  <div class="glabel">대표 색상</div>
-  <div class="cells"><div class="sw">${COLORS.map(([h, nm]) => `<label title="${nm}"><input type="radio" name="${p}-sw" id="${p}-sw-${h.slice(1)}" value="${h}"${known && h.toLowerCase() === String(c.color).toLowerCase() ? ' checked' : ''} aria-label="${nm}"><span style="--c:${h}"></span></label>`).join('')}<label class="custom${known ? '' : ' on'}" id="${p}-custom" title="직접 고르기"><input type="color" id="${p}-color" value="${esc(c.color)}" aria-label="색 직접 고르기"></label></div></div>
   <div class="glabel">팬 규모</div>
   <div class="seg">${seg(p + '-scale', Object.entries(SCALE).map(([k, v]) => [k, v.label]), c.scale)}</div>
   <p class="gnote">신인은 구독자 수천 명, 대세는 수만 명, 월드스타는 100만 명 안팎이에요.</p>`;
@@ -1290,19 +1272,11 @@ function bindProfile(root, p, draft) {
   });
   const nameIn = root.querySelector(`#${p}-name`);
   nameIn.addEventListener('input', () => { draft.name = nameIn.value.trim(); if (!draft.avatar) root.querySelector(`#${p}-face`).innerHTML = faceHTML(draft); });
-  const colorIn = root.querySelector(`#${p}-color`), custom = root.querySelector(`#${p}-custom`);
-  root.querySelectorAll(`input[name="${p}-sw"]`).forEach(r => r.addEventListener('change', () => { colorIn.value = r.value; custom.classList.remove('on'); draft.color = r.value; setAccent(r.value); }));
-  colorIn.addEventListener('input', () => {
-    let hit = false;
-    root.querySelectorAll(`input[name="${p}-sw"]`).forEach(r => { r.checked = r.value.toLowerCase() === colorIn.value.toLowerCase(); hit = hit || r.checked; });
-    custom.classList.toggle('on', !hit);
-    draft.color = colorIn.value; setAccent(colorIn.value);
-  });
 }
 function readProfile(root, p, draft) {
   const v = id => root.querySelector(`#${p}-${id}`).value.trim();
   const r = name => { const el = root.querySelector(`input[name="${p}-${name}"]:checked`); return el ? el.value : null; };
-  return { name: v('name'), group: v('group'), fandom: v('fandom'), gender: r('gender') || 'f', scale: r('scale') || 'mid', color: root.querySelector(`#${p}-color`).value || cfg.color, avatar: draft.avatar || null };
+  return { name: v('name'), group: v('group'), fandom: v('fandom'), gender: r('gender') || 'f', scale: r('scale') || 'mid', color: PINK, avatar: draft.avatar || null };
 }
 
 /* ---------- setup ---------- */
@@ -1349,7 +1323,7 @@ function debut(prof) {
 function openSettings() {
   const draft = Object.assign({}, cfg);
   const aiWarn = aiState === 'none' ? ' 지금 화면에서는 쓸 수 없어서 기본 답장으로 나와요.' : aiState === 'denied' ? ' Claude 사용을 허락하지 않아서 기본 답장으로 나와요. 다시 열면 또 물어봐요.' : '';
-  const cancel = () => { setAccent(cfg.color); closePage(); };
+  const cancel = () => closePage();
   openPage({
     title: '설정', back: cancel,
     right: { label: '완료', fn: () => { if (page._save) page._save(); } },
@@ -1379,7 +1353,7 @@ function openSettings() {
         title: '처음부터 다시 시작할까요?', sub: '채팅, 편지, 차단 목록이 모두 지워져요.',
         actions: [{ label: '다시 시작', red: true, fn: () => {
           jobs = []; msgs = []; letters = []; blocked.clear(); media.clear(); urlCache.clear();
-          cfg.debuted = false; meta.subs = 0; saveAll(); renderAll(); updateBadge(); setAccent(cfg.color);
+          cfg.debuted = false; meta.subs = 0; saveAll(); renderAll(); updateBadge();
           showSetup();
         } }]
       }));
